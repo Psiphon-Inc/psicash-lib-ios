@@ -18,7 +18,6 @@
  */
 
 #import <XCTest/XCTest.h>
-#import "PsiCashLibWrapper.h"
 
 @interface PsiCashLibTests : XCTestCase
 

@@ -25,7 +25,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Pair<Value> : NSObject
+@interface PSIPair<Value> : NSObject
 
 @property (nonatomic) Value first;
 @property (nonatomic) Value second;
@@ -34,7 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 
-@interface HTTPParams : NSObject
+@interface PSIHTTPParams : NSObject
 
 @property (nonatomic, readonly) NSString *scheme;
 @property (nonatomic, readonly) NSString *hostname;
@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *method;
 @property (nonatomic, readonly) NSString *path;
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *headers;
-@property (nonatomic, readonly) NSArray<Pair<NSString *> *> *query;
+@property (nonatomic, readonly) NSArray<PSIPair<NSString *> *> *query;
 
 /**
  Creates complete URL including the query string.
@@ -52,7 +52,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface HTTPResult: NSObject
+@interface PSIHTTPResult: NSObject
 
 + (int)CRITICAL_ERROR;
 + (int)RECOVERABLE_ERROR;
@@ -65,7 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface Error : NSObject
+@interface PSIError : NSObject
 
 @property (nonatomic, readonly) BOOL critical;
 @property (nonatomic, readonly) BOOL hasValue;
@@ -74,15 +74,15 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface Result<Value> : NSObject
+@interface PSIResult<Value> : NSObject
 
 @property (nonatomic, nullable) Value success;
-@property (nonatomic, nullable) Error *failure;
+@property (nonatomic, nullable) PSIError *failure;
 
 @end
 
 
-@interface Authorization : NSObject
+@interface PSIAuthorization : NSObject
 
 @property (nonatomic, readonly) NSString *ID;
 @property (nonatomic, readonly) NSString *accessType;
@@ -92,7 +92,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface PurchasePrice : NSObject
+@interface PSIPurchasePrice : NSObject
 
 @property (nonatomic, readonly) NSString *transactionClass;
 @property (nonatomic, readonly) NSString *distinguisher;
@@ -101,47 +101,47 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-@interface Purchase : NSObject
+@interface PSIPurchase : NSObject
 
 @property (nonatomic, readonly) NSString *transactionID;
 @property (nonatomic, readonly) NSString *transactionClass;
 @property (nonatomic, readonly) NSString *distinguisher;
 @property (nonatomic, readonly, nullable) NSString * iso8601ServerTimeExpiry;
 @property (nonatomic, readonly, nullable) NSString * iso8601LocalTimeExpiry;
-@property (nonatomic, readonly, nullable) Authorization * authorization;
+@property (nonatomic, readonly, nullable) PSIAuthorization * authorization;
 
 @end
 
 
 // Values should match psicash::Status enum class.
-typedef NS_ENUM(NSInteger, Status) {
-    StatusInvalid = -1, // Should never be used if well-behaved
-    StatusSuccess = 0,
-    StatusExistingTransaction,
-    StatusInsufficientBalance,
-    StatusTransactionAmountMismatch,
-    StatusTransactionTypeNotFound,
-    StatusInvalidTokens,
-    StatusServerError
+typedef NS_ENUM(NSInteger, PSIStatus) {
+    PSIStatusInvalid = -1, // Should never be used if well-behaved
+    PSIStatusSuccess = 0,
+    PSIStatusExistingTransaction,
+    PSIStatusInsufficientBalance,
+    PSIStatusTransactionAmountMismatch,
+    PSIStatusTransactionTypeNotFound,
+    PSIStatusInvalidTokens,
+    PSIStatusServerError
 };
 
-@interface StatusWrapper : NSObject
+@interface PSIStatusWrapper : NSObject
 
-@property (nonatomic, readonly) Status status;
+@property (nonatomic, readonly) PSIStatus status;
 
 @end
 
 
-@interface NewExpiringPurchaseResponse : NSObject
+@interface PSINewExpiringPurchaseResponse : NSObject
 
-@property (nonatomic, readonly) Status status;
-@property (nonatomic, readonly, nullable) Purchase *purchase;
+@property (nonatomic, readonly) PSIStatus status;
+@property (nonatomic, readonly, nullable) PSIPurchase *purchase;
 
 @end
 
 
 // Enumeration of possible token types.
-@interface TokenType : NSObject
+@interface PSITokenType : NSObject
 
 @property (class, nonatomic, readonly, nonnull) NSString *earnerTokenType;
 @property (class, nonatomic, readonly, nonnull) NSString *spenderTokenType;
@@ -151,18 +151,18 @@ typedef NS_ENUM(NSInteger, Status) {
 @end
 
 
-@interface PsiCashLibWrapper : NSObject
+@interface PSIPsiCashLibWrapper : NSObject
 
-- (Error *_Nullable)initializeWithUserAgent:(NSString *)userAgent
+- (PSIError *_Nullable)initializeWithUserAgent:(NSString *)userAgent
                            andFileStoreRoot:(NSString *)fileStoreRoot
-                            httpRequestFunc:(HTTPResult * (^)(HTTPParams *))httpRequestFunc
+                            httpRequestFunc:(PSIHTTPResult * (^)(PSIHTTPParams *))httpRequestFunc
                                        test:(BOOL)test WARN_UNUSED_RESULT;
 
-- (Error *_Nullable)resetWithFileStoreRoot:(NSString *)fileStoreRoot test:(BOOL)test WARN_UNUSED_RESULT;
+- (PSIError *_Nullable)resetWithFileStoreRoot:(NSString *)fileStoreRoot test:(BOOL)test WARN_UNUSED_RESULT;
 
 - (BOOL)initialized;
 
-- (Error *_Nullable)setRequestMetadataItem:(NSString *)key withValue:(NSString *)value WARN_UNUSED_RESULT;
+- (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key withValue:(NSString *)value WARN_UNUSED_RESULT;
 
 - (NSArray<NSString *> *)validTokenTypes;
 
@@ -170,33 +170,33 @@ typedef NS_ENUM(NSInteger, Status) {
 
 - (int64_t)balance;
 
-- (NSArray<PurchasePrice *> *)getPurchasePrices;
+- (NSArray<PSIPurchasePrice *> *)getPurchasePrices;
 
-- (NSArray<Purchase *> *)getPurchases;
+- (NSArray<PSIPurchase *> *)getPurchases;
 
-- (NSArray<Purchase *> *)activePurchases;
+- (NSArray<PSIPurchase *> *)activePurchases;
 
-- (NSArray<Authorization *> *)getAuthorizationsWithActiveOnly:(BOOL)activeOnly;
+- (NSArray<PSIAuthorization *> *)getAuthorizationsWithActiveOnly:(BOOL)activeOnly;
 
-- (NSArray<Purchase *> *)getPurchasesByAuthorizationID:(NSArray<NSString *> *)authorizationIDs;
+- (NSArray<PSIPurchase *> *)getPurchasesByAuthorizationID:(NSArray<NSString *> *)authorizationIDs;
 
-- (Purchase *_Nullable)nextExpiringPurchase;
+- (PSIPurchase *_Nullable)nextExpiringPurchase;
 
-- (Result<NSArray<Purchase *> *> *)expirePurchases WARN_UNUSED_RESULT;
+- (PSIResult<NSArray<PSIPurchase *> *> *)expirePurchases WARN_UNUSED_RESULT;
 
-- (Result<NSArray<Purchase *> *> *)removePurchases:(NSArray<NSString *> *)transactionIds WARN_UNUSED_RESULT;
+- (PSIResult<NSArray<PSIPurchase *> *> *)removePurchases:(NSArray<NSString *> *)transactionIds WARN_UNUSED_RESULT;
 
-- (Result<NSString *> *)modifyLandingPage:(NSString *)url;
+- (PSIResult<NSString *> *)modifyLandingPage:(NSString *)url;
 
-- (Result<NSString *> *)getBuyPsiURL;
+- (PSIResult<NSString *> *)getBuyPsiURL;
 
-- (Result<NSString *> *)getRewardedActivityData;
+- (PSIResult<NSString *> *)getRewardedActivityData;
 
 - (NSString *)getDiagnosticInfo;
 
-- (Result<StatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses WARN_UNUSED_RESULT;
+- (PSIResult<PSIStatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses WARN_UNUSED_RESULT;
 
-- (Result<NewExpiringPurchaseResponse *> *)
+- (PSIResult<PSINewExpiringPurchaseResponse *> *)
 newExpiringPurchaseWithTransactionClass:(NSString *)transactionClass
 distinguisher:(NSString *)distinguisher
 expectedPrice:(int64_t)expectedPrice WARN_UNUSED_RESULT;

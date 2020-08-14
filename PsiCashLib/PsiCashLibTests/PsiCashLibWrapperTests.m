@@ -36,9 +36,9 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 @implementation PsiCashLibWrapperTests {
     dispatch_semaphore_t sema;
-    PsiCashLibWrapper *lib;
-    Error *initErr;
-    HTTPParams *lastParams;
+    PSIPsiCashLibWrapper *lib;
+    PSIError *initErr;
+    PSIHTTPParams *lastParams;
     NSURL *tempDir;
 }
 
@@ -89,16 +89,16 @@ typedef NS_ENUM(NSInteger, TestError) {
     
     sema = dispatch_semaphore_create(0);
     
-    lib = [[PsiCashLibWrapper alloc] init];
+    lib = [[PSIPsiCashLibWrapper alloc] init];
     
     initErr = [lib initializeWithUserAgent:@"Psiphon-PsiCash-iOS"
                           andFileStoreRoot:tempDir.path
-                 httpRequestFunc:^HTTPResult * _Nonnull(HTTPParams * _Nonnull params) {
+                 httpRequestFunc:^PSIHTTPResult * _Nonnull(PSIHTTPParams * _Nonnull params) {
         
         self->lastParams = params;
         
         if (self.httpRequestsDryRun == TRUE) {
-            return [[HTTPResult alloc] initWithCode:[HTTPResult CRITICAL_ERROR]
+            return [[PSIHTTPResult alloc] initWithCode:[PSIHTTPResult CRITICAL_ERROR]
                                                body:@"" date:@"" error:@"dry-run"];
         }
         
@@ -110,12 +110,12 @@ typedef NS_ENUM(NSInteger, TestError) {
         [request setHTTPMethod:params.method];
         [request setAllHTTPHeaderFields:params.headers];
 
-        HTTPResult *__block result;
+        PSIHTTPResult *__block result;
         
         NSURLSessionDataTask *task = [NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             
             if (error != nil) {
-                result = [[HTTPResult alloc] initWithCode:HTTPResult.RECOVERABLE_ERROR
+                result = [[PSIHTTPResult alloc] initWithCode:PSIHTTPResult.RECOVERABLE_ERROR
                                                    body:@""
                                                    date:@""
                                                   error:[error description]];
@@ -125,7 +125,7 @@ typedef NS_ENUM(NSInteger, TestError) {
                 
                 NSString *body = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
              
-                result = [[HTTPResult alloc] initWithCode:(int)httpResponse.statusCode
+                result = [[PSIHTTPResult alloc] initWithCode:(int)httpResponse.statusCode
                                                        body:body
                                                        date:dateHeader
                                                       error:@""];
@@ -149,13 +149,13 @@ typedef NS_ENUM(NSInteger, TestError) {
 // Refreshes PsiCash state.
 - (void)refreshState:(NSArray<NSString *> *_Nonnull)purchaseClasses {
     // Act
-    Result<StatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses];
+    PSIResult<PSIStatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses];
     
     // Assert
     XCTAssert(result != nil);
     XCTAssert(result.failure == nil);
     XCTAssert(result.success != nil);
-    XCTAssert(result.success.status == StatusSuccess);
+    XCTAssert(result.success.status == PSIStatusSuccess);
 }
 
 - (BOOL)tearDownWithError:(NSError *__autoreleasing  _Nullable *)error {
@@ -183,7 +183,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testReset {
     // Act
-    Error *error = [lib resetWithFileStoreRoot:tempDir.path test:TRUE];
+    PSIError *error = [lib resetWithFileStoreRoot:tempDir.path test:TRUE];
     
     // Assert
     XCTAssert(error == nil);
@@ -191,12 +191,12 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testSetRequestMetadataItem {
     // Arrange
-    Error *err1 = [lib setRequestMetadataItem:@"metadata_key_1" withValue:@"metadata_value_1"];
-    Error *err2 = [lib setRequestMetadataItem:@"metadata_key_2" withValue:@"metadata_value_2"];
+    PSIError *err1 = [lib setRequestMetadataItem:@"metadata_key_1" withValue:@"metadata_value_1"];
+    PSIError *err2 = [lib setRequestMetadataItem:@"metadata_key_2" withValue:@"metadata_value_2"];
     self.httpRequestsDryRun = TRUE;
     
     // Act
-    Result<StatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:@[]];
+    PSIResult<PSIStatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:@[]];
     
     // Assert
     XCTAssert(err1 == nil);
@@ -222,9 +222,9 @@ typedef NS_ENUM(NSInteger, TestError) {
     
     // Assert
     XCTAssert(validTokenTypes != nil);
-    XCTAssert([validTokenTypes containsObject:TokenType.earnerTokenType]);
-    XCTAssert([validTokenTypes containsObject:TokenType.spenderTokenType]);
-    XCTAssert([validTokenTypes containsObject:TokenType.indicatorTokenType]);
+    XCTAssert([validTokenTypes containsObject:PSITokenType.earnerTokenType]);
+    XCTAssert([validTokenTypes containsObject:PSITokenType.spenderTokenType]);
+    XCTAssert([validTokenTypes containsObject:PSITokenType.indicatorTokenType]);
 }
 
 - (void)testIsAccount {
@@ -236,7 +236,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     BOOL isAccount = [lib isAccount];
     
     // Assert
-    if ([validTokenTypes containsObject: TokenType.accountTokenType]) {
+    if ([validTokenTypes containsObject: PSITokenType.accountTokenType]) {
         XCTAssert(isAccount == TRUE);
     } else {
         XCTAssert(isAccount == FALSE);
@@ -254,7 +254,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testGetPurchasePrices {
     // Act
     [self refreshState:@[@"speed-boost"]];
-    NSArray<PurchasePrice *> *array = [lib getPurchasePrices];
+    NSArray<PSIPurchasePrice *> *array = [lib getPurchasePrices];
     
     // Assert
     XCTAssert(array != nil);
@@ -300,7 +300,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testNextExpiringPurchaseWithoutPurchase {
     // Act
-    Purchase *optional = [lib nextExpiringPurchase];
+    PSIPurchase *optional = [lib nextExpiringPurchase];
     
     // Assert
     XCTAssert(optional == nil);
@@ -308,7 +308,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testRemovePurchasesWithoutPurchase {
     // Act
-    Result<NSArray<Purchase *> *> *result = [lib removePurchases:@[]];
+    PSIResult<NSArray<PSIPurchase *> *> *result = [lib removePurchases:@[]];
     
     // Assert
     XCTAssert(result.failure == nil);
@@ -318,7 +318,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testModifyLandingPage {
     // Act
-    Result<NSString *> * result = [lib modifyLandingPage:@"https://example.com/"];
+    PSIResult<NSString *> * result = [lib modifyLandingPage:@"https://example.com/"];
     
     // Assert
     XCTAssert(result != nil);
@@ -330,7 +330,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testGetBuyPsiURLWithoutRefresh {
     // Act
-    Result<NSString *> *result = [lib getBuyPsiURL];
+    PSIResult<NSString *> *result = [lib getBuyPsiURL];
     
     // Assert
     XCTAssert(result != nil);
@@ -341,7 +341,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testGetBuyPsiURLWithRefresh {
     // Act
     [self refreshState:@[]];
-    Result<NSString *> *result = [lib getBuyPsiURL];
+    PSIResult<NSString *> *result = [lib getBuyPsiURL];
     
     // Assert
     XCTAssert(result != nil);
@@ -352,7 +352,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testGetRewardedActivityDataWithNoReward {
     // Act
     [self refreshState:@[]];
-    Result<NSString *> *result = [lib getRewardedActivityData];
+    PSIResult<NSString *> *result = [lib getRewardedActivityData];
     
     // Assert
     XCTAssert(result != nil);
@@ -373,11 +373,11 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testExpiringPurchaseWithInsufficientBalance {
     // Arrange
     [self refreshState:@[@"speed-boost"]];
-    NSArray<PurchasePrice *> *purchasePrices = [lib getPurchasePrices];
-    PurchasePrice *itemToBuy = purchasePrices[0];
+    NSArray<PSIPurchasePrice *> *purchasePrices = [lib getPurchasePrices];
+    PSIPurchasePrice *itemToBuy = purchasePrices[0];
     
     // Act
-    Result<NewExpiringPurchaseResponse *> *result =
+    PSIResult<PSINewExpiringPurchaseResponse *> *result =
     [lib newExpiringPurchaseWithTransactionClass:itemToBuy.transactionClass
                                    distinguisher:itemToBuy.distinguisher
                                    expectedPrice:itemToBuy.price];
@@ -386,7 +386,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result != nil);
     XCTAssert(result.failure == nil);
     XCTAssert(result.success != nil);
-    XCTAssert(result.success.status == StatusInsufficientBalance);
+    XCTAssert(result.success.status == PSIStatusInsufficientBalance);
     XCTAssert(result.success.purchase == nil);
 }
 

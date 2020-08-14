@@ -32,7 +32,7 @@ bool ObjcBOOL2bool(BOOL value) {
 
 #pragma mark - Pair
 
-@implementation Pair
+@implementation PSIPair
 
 - (instancetype)initWith:(id)first :(id)second {
     self = [super init];
@@ -102,14 +102,14 @@ dictionaryFromMap(const std::map<std::string, std::string>& map) {
     return dict;
 }
 
-NSArray<Pair<NSString *> *> *_Nonnull
+NSArray<PSIPair<NSString *> *> *_Nonnull
 arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
-    NSMutableArray<Pair<NSString *> *> *array = [NSMutableArray arrayWithCapacity:vec.size()];
+    NSMutableArray<PSIPair<NSString *> *> *array = [NSMutableArray arrayWithCapacity:vec.size()];
     
     for (auto pair : vec) {
         NSString *first = [NSString stringWithUTF8String:pair.first.c_str()];
         NSString *second = [NSString stringWithUTF8String:pair.second.c_str()];
-        [array addObject:[[Pair alloc] initWith:first :second]];
+        [array addObject:[[PSIPair alloc] initWith:first :second]];
     }
     
     return array;
@@ -117,7 +117,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 
 #pragma mark - HTTPParams
 
-@implementation HTTPParams
+@implementation PSIHTTPParams
 
 - (instancetype)initWithCppHTTPParams:(const psicash::HTTPParams&)params {
     self = [super init];
@@ -161,7 +161,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 
 #pragma mark - HTTPResult
 
-@implementation HTTPResult {
+@implementation PSIHTTPResult {
     psicash::HTTPResult result;
 }
 
@@ -195,20 +195,20 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 
 #pragma mark - Error
 
-@implementation Error
+@implementation PSIError
 
-+ (Error *_Nullable)createFrom:(const psicash::error::Error&)error {
++ (PSIError *_Nullable)createFrom:(const psicash::error::Error&)error {
     if (error.HasValue() == false) {
         return nil;
     } else {
-        return [[Error alloc]
+        return [[PSIError alloc]
                 initWithCritical:bool2ObjcBOOL(error.Critical())
                 description:[NSString stringWithUTF8String:error.ToString().c_str()]];
     }
 }
 
-+ (Error *_Nonnull)createOrThrow:(const psicash::error::Error&)error {
-    Error *_Nullable err = [Error createFrom:error];
++ (PSIError *_Nonnull)createOrThrow:(const psicash::error::Error&)error {
+    PSIError *_Nullable err = [PSIError createFrom:error];
     if (err == nil){
         @throw [NSException exceptionWithName:@"Unexpected value"
                                        reason:@"expected error to have a value"
@@ -234,7 +234,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 
 #pragma mark - Result
 
-@implementation Result
+@implementation PSIResult
 
 - (instancetype)initWithSuccess:(id _Nonnull)success {
     self = [super init];
@@ -245,7 +245,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     return self;
 }
 
-- (instancetype)initWithFailure:(Error *_Nonnull)failure {
+- (instancetype)initWithFailure:(PSIError *_Nonnull)failure {
     self = [super init];
     if (self) {
         _success = nil;
@@ -254,19 +254,19 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     return self;
 }
 
-+ (Result *_Nonnull)success:(id _Nonnull)success {
-    return [[Result alloc] initWithSuccess:success];
++ (PSIResult *_Nonnull)success:(id _Nonnull)success {
+    return [[PSIResult alloc] initWithSuccess:success];
 }
 
-+ (Result *_Nonnull)failure:(Error *_Nonnull)failure {
-    return [[Result alloc] initWithFailure:failure];
++ (PSIResult *_Nonnull)failure:(PSIError *_Nonnull)failure {
+    return [[PSIResult alloc] initWithFailure:failure];
 }
 
-+ (Result<NSString *> *_Nonnull)fromStringResult:(const psicash::error::Result<std::string>&)result {
++ (PSIResult<NSString *> *_Nonnull)fromStringResult:(const psicash::error::Result<std::string>&)result {
     if (result.has_value()) {
-        return [Result success:[NSString stringWithUTF8String:result.value().c_str()]];
+        return [PSIResult success:[NSString stringWithUTF8String:result.value().c_str()]];
     } else {
-        return [Result failure:[Error createOrThrow:result.error()]];
+        return [PSIResult failure:[PSIError createOrThrow:result.error()]];
     }
 }
 
@@ -274,7 +274,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 
 #pragma mark - Authorization
 
-@implementation Authorization
+@implementation PSIAuthorization
 
 - (instancetype)initWithAuth:(const psicash::Authorization&)auth {
     self = [super init];
@@ -288,15 +288,15 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     return self;
 }
 
-+ (Authorization *_Nonnull)createFrom:(const psicash::Authorization&)auth {
-    return [[Authorization alloc] initWithAuth:auth];
++ (PSIAuthorization *_Nonnull)createFrom:(const psicash::Authorization&)auth {
+    return [[PSIAuthorization alloc] initWithAuth:auth];
 }
 
 @end
 
 #pragma mark - PurchasePrice
 
-@implementation PurchasePrice
+@implementation PSIPurchasePrice
 
 - (instancetype)initWithPurchasePrice:(const psicash::PurchasePrice&)purchasePrice {
     self = [super init];
@@ -308,15 +308,15 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     return self;
 }
 
-+ (PurchasePrice *_Nonnull)createFrom:(const psicash::PurchasePrice&)purchasePrice {
-    return [[PurchasePrice alloc] initWithPurchasePrice:purchasePrice];
++ (PSIPurchasePrice *_Nonnull)createFrom:(const psicash::PurchasePrice&)purchasePrice {
+    return [[PSIPurchasePrice alloc] initWithPurchasePrice:purchasePrice];
 }
 
 @end
 
 #pragma mark - Purchase
 
-@implementation Purchase
+@implementation PSIPurchase
 
 - (instancetype)initWithPurchase:(const psicash::Purchase&)purchase {
     self = [super init];
@@ -340,7 +340,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
         }
         
         if (purchase.authorization.has_value()) {
-            _authorization = [Authorization createFrom:purchase.authorization.value()];
+            _authorization = [PSIAuthorization createFrom:purchase.authorization.value()];
         } else {
             _authorization = nil;
         }
@@ -348,31 +348,31 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     return self;
 }
 
-+ (Purchase *_Nonnull)createFrom:(const psicash::Purchase&)purchase {
-    return [[Purchase alloc] initWithPurchase:purchase];
++ (PSIPurchase *_Nonnull)createFrom:(const psicash::Purchase&)purchase {
+    return [[PSIPurchase alloc] initWithPurchase:purchase];
 }
 
-+ (Purchase *_Nullable)fromOptional:(const nonstd::optional<psicash::Purchase>&)purchase {
++ (PSIPurchase *_Nullable)fromOptional:(const nonstd::optional<psicash::Purchase>&)purchase {
     if (purchase.has_value()) {
-        return [Purchase createFrom:purchase.value()];
+        return [PSIPurchase createFrom:purchase.value()];
     } else {
         return nil;
     }
 }
 
-+ (Result<NSArray<Purchase *> *> *_Nonnull)
++ (PSIResult<NSArray<PSIPurchase *> *> *_Nonnull)
 fromResult:(const psicash::error::Result<psicash::Purchases>&)result {
     if (result.has_value()) {
-        return [Result success:[Purchase fromArray:result.value()]];
+        return [PSIResult success:[PSIPurchase fromArray:result.value()]];
     } else {
-        return [Result failure:[Error createOrThrow:result.error()]];
+        return [PSIResult failure:[PSIError createOrThrow:result.error()]];
     }
 }
 
-+ (NSArray<Purchase *> *_Nonnull)fromArray:(const psicash::Purchases&)purchases {
-    NSMutableArray<Purchase *> *array = [NSMutableArray arrayWithCapacity:purchases.size()];
++ (NSArray<PSIPurchase *> *_Nonnull)fromArray:(const psicash::Purchases&)purchases {
+    NSMutableArray<PSIPurchase *> *array = [NSMutableArray arrayWithCapacity:purchases.size()];
     for (auto value: purchases) {
-        [array addObject:[Purchase createFrom:value]];
+        [array addObject:[PSIPurchase createFrom:value]];
     }
     return array;
 }
@@ -381,28 +381,28 @@ fromResult:(const psicash::error::Result<psicash::Purchases>&)result {
 
 #pragma mark - Status
 
-Status statusFromStatus(const psicash::Status& status) {
+PSIStatus statusFromStatus(const psicash::Status& status) {
     switch (status) {
         case psicash::Status::Invalid:
-            return StatusInvalid;
+            return PSIStatusInvalid;
         case psicash::Status::Success:
-            return StatusSuccess;
+            return PSIStatusSuccess;
         case psicash::Status::ExistingTransaction:
-            return StatusExistingTransaction;
+            return PSIStatusExistingTransaction;
         case psicash::Status::InsufficientBalance:
-            return StatusInsufficientBalance;
+            return PSIStatusInsufficientBalance;
         case psicash::Status::TransactionAmountMismatch:
-            return StatusTransactionAmountMismatch;
+            return PSIStatusTransactionAmountMismatch;
         case psicash::Status::TransactionTypeNotFound:
-            return StatusTransactionTypeNotFound;
+            return PSIStatusTransactionTypeNotFound;
         case psicash::Status::InvalidTokens:
-            return StatusInvalidTokens;
+            return PSIStatusInvalidTokens;
         case psicash::Status::ServerError:
-            return StatusServerError;
+            return PSIStatusServerError;
     }
 }
 
-@implementation StatusWrapper
+@implementation PSIStatusWrapper
 
 - (instancetype)initWithStatus:(const psicash::Status&)status {
     self = [super init];
@@ -412,11 +412,11 @@ Status statusFromStatus(const psicash::Status& status) {
     return self;
 }
 
-+ (Result<StatusWrapper *> *_Nonnull)fromResult:(const psicash::error::Result<psicash::Status>&)result {
++ (PSIResult<PSIStatusWrapper *> *_Nonnull)fromResult:(const psicash::error::Result<psicash::Status>&)result {
     if (result.has_value()) {
-        return [Result success:[[StatusWrapper alloc] initWithStatus:result.value()]];
+        return [PSIResult success:[[PSIStatusWrapper alloc] initWithStatus:result.value()]];
     } else {
-        return [Result failure:[Error createOrThrow:result.error()]];
+        return [PSIResult failure:[PSIError createOrThrow:result.error()]];
     }
 }
 
@@ -424,24 +424,24 @@ Status statusFromStatus(const psicash::Status& status) {
 
 #pragma mark - NewExpiringPurchaseResponse
 
-@implementation NewExpiringPurchaseResponse
+@implementation PSINewExpiringPurchaseResponse
 
 - (instancetype)initWith:(const psicash::PsiCash::NewExpiringPurchaseResponse&)value {
     self = [super init];
     if (self) {
         _status = statusFromStatus(value.status);
-        _purchase = [Purchase fromOptional:value.purchase];
+        _purchase = [PSIPurchase fromOptional:value.purchase];
     }
     return self;
 }
 
-+ (Result<NewExpiringPurchaseResponse *> *_Nonnull)
++ (PSIResult<PSINewExpiringPurchaseResponse *> *_Nonnull)
 fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseResponse>&)result {
     
     if (result.has_value()) {
-        return [Result success:[[NewExpiringPurchaseResponse alloc] initWith:result.value()]];
+        return [PSIResult success:[[PSINewExpiringPurchaseResponse alloc] initWith:result.value()]];
     } else {
-        return [Result failure:[Error createOrThrow:result.error()]];
+        return [PSIResult failure:[PSIError createOrThrow:result.error()]];
     }
 }
 
@@ -449,7 +449,7 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 #pragma mark - Token types
 
-@implementation TokenType
+@implementation PSITokenType
 
 + (NSString *)earnerTokenType {
     return [NSString stringWithUTF8String:psicash::kEarnerTokenType];
@@ -470,7 +470,7 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 #pragma mark - PsiCashLibWrapper
 
-@implementation PsiCashLibWrapper {
+@implementation PSIPsiCashLibWrapper {
     psicash::PsiCash *psiCash;
 }
 
@@ -486,34 +486,34 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
     delete psiCash;
 }
 
-- (Error *_Nullable)initializeWithUserAgent:(NSString *)userAgent
+- (PSIError *_Nullable)initializeWithUserAgent:(NSString *)userAgent
                            andFileStoreRoot:(NSString *)fileStoreRoot
-                            httpRequestFunc:(HTTPResult * (^)(HTTPParams *))httpRequestFunc
+                            httpRequestFunc:(PSIHTTPResult * (^)(PSIHTTPParams *))httpRequestFunc
                                        test:(BOOL)test {
     psicash::error::Error err = psiCash->Init([userAgent UTF8String],
                                               [fileStoreRoot UTF8String],
                                               [httpRequestFunc](const psicash::HTTPParams& cppParams) -> psicash::HTTPResult {
-        return [httpRequestFunc([[HTTPParams alloc] initWithCppHTTPParams:cppParams])
+        return [httpRequestFunc([[PSIHTTPParams alloc] initWithCppHTTPParams:cppParams])
                 cppHttpResult];
     }, ObjcBOOL2bool(test));
     
-    return [Error createFrom:err];
+    return [PSIError createFrom:err];
 }
 
-- (Error *_Nullable)resetWithFileStoreRoot:(NSString *)fileStoreRoot test:(BOOL)test {
+- (PSIError *_Nullable)resetWithFileStoreRoot:(NSString *)fileStoreRoot test:(BOOL)test {
     psicash::error::Error error = psiCash->Reset([fileStoreRoot UTF8String], ObjcBOOL2bool(test));
-    return [Error createFrom:error];
+    return [PSIError createFrom:error];
 }
 
 - (BOOL)initialized {
     return bool2ObjcBOOL(psiCash->Initialized());
 }
 
-- (Error *_Nullable)setRequestMetadataItem:(NSString *)key
+- (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key
                                  withValue:(NSString *)value {
     psicash::error::Error err = psiCash->SetRequestMetadataItem([key UTF8String],
                                                                 [value UTF8String]);
-    return [Error createFrom:err];
+    return [PSIError createFrom:err];
 }
 
 - (NSArray<NSString *> *_Nonnull)validTokenTypes {
@@ -528,69 +528,69 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
     return psiCash->Balance();
 }
 
-- (NSArray<PurchasePrice *> *)getPurchasePrices {
+- (NSArray<PSIPurchasePrice *> *)getPurchasePrices {
     psicash::PurchasePrices pp = psiCash->GetPurchasePrices();
-    NSMutableArray<PurchasePrice *> *array = [NSMutableArray arrayWithCapacity:pp.size()];
+    NSMutableArray<PSIPurchasePrice *> *array = [NSMutableArray arrayWithCapacity:pp.size()];
     for (auto value : pp) {
-        [array addObject:[PurchasePrice createFrom:value]];
+        [array addObject:[PSIPurchasePrice createFrom:value]];
     }
     return array;
 }
 
-- (NSArray<Purchase *> *)getPurchases {
+- (NSArray<PSIPurchase *> *)getPurchases {
     psicash::Purchases purchases = psiCash->GetPurchases();
-    return [Purchase fromArray:purchases];
+    return [PSIPurchase fromArray:purchases];
 }
 
-- (NSArray<Purchase *> *)activePurchases {
+- (NSArray<PSIPurchase *> *)activePurchases {
     psicash::Purchases activePurchases = psiCash->ActivePurchases();
-    return [Purchase fromArray:activePurchases];
+    return [PSIPurchase fromArray:activePurchases];
 }
 
-- (NSArray<Authorization *> *)getAuthorizationsWithActiveOnly:(BOOL)activeOnly {
+- (NSArray<PSIAuthorization *> *)getAuthorizationsWithActiveOnly:(BOOL)activeOnly {
     psicash::Authorizations auths = psiCash->GetAuthorizations(ObjcBOOL2bool(activeOnly));
-    NSMutableArray<Authorization *> *array = [NSMutableArray arrayWithCapacity:auths.size()];
+    NSMutableArray<PSIAuthorization *> *array = [NSMutableArray arrayWithCapacity:auths.size()];
     for (auto value: auths) {
-        [array addObject:[Authorization createFrom:value]];
+        [array addObject:[PSIAuthorization createFrom:value]];
     }
     return array;
 }
 
-- (NSArray<Purchase *> *)getPurchasesByAuthorizationID:(NSArray<NSString *> *)authorizationIDs {
+- (NSArray<PSIPurchase *> *)getPurchasesByAuthorizationID:(NSArray<NSString *> *)authorizationIDs {
     std::vector<std::string> authorization_ids = vecFromArray(authorizationIDs);
     psicash::Purchases purchases = psiCash->GetPurchasesByAuthorizationID(authorization_ids);
-    return [Purchase fromArray:purchases];
+    return [PSIPurchase fromArray:purchases];
 }
 
-- (Purchase *_Nullable)nextExpiringPurchase {
+- (PSIPurchase *_Nullable)nextExpiringPurchase {
     nonstd::optional<psicash::Purchase> purchase = psiCash->NextExpiringPurchase();
-    return [Purchase fromOptional:purchase];
+    return [PSIPurchase fromOptional:purchase];
 }
 
-- (Result<NSArray<Purchase *> *> *)expirePurchases {
+- (PSIResult<NSArray<PSIPurchase *> *> *)expirePurchases {
     psicash::error::Result<psicash::Purchases> result = psiCash->ExpirePurchases();
-    return [Purchase fromResult:result];
+    return [PSIPurchase fromResult:result];
 }
 
-- (Result<NSArray<Purchase *> *> *)removePurchases:(NSArray<NSString *> *)transactionIds {
+- (PSIResult<NSArray<PSIPurchase *> *> *)removePurchases:(NSArray<NSString *> *)transactionIds {
     std::vector<std::string> transaction_ids = vecFromArray(transactionIds);
     psicash::error::Result<psicash::Purchases> result = psiCash->RemovePurchases(transaction_ids);
-    return [Purchase fromResult:result];
+    return [PSIPurchase fromResult:result];
 }
 
-- (Result<NSString *> *)modifyLandingPage:(NSString *)url {
+- (PSIResult<NSString *> *)modifyLandingPage:(NSString *)url {
     psicash::error::Result<std::string> result = psiCash->ModifyLandingPage([url UTF8String]);
-    return [Result fromStringResult:result];
+    return [PSIResult fromStringResult:result];
 }
 
-- (Result<NSString *> *)getBuyPsiURL {
+- (PSIResult<NSString *> *)getBuyPsiURL {
     psicash::error::Result<std::string> result = psiCash->GetBuyPsiURL();
-    return [Result fromStringResult:result];
+    return [PSIResult fromStringResult:result];
 }
 
-- (Result<NSString *> *)getRewardedActivityData {
+- (PSIResult<NSString *> *)getRewardedActivityData {
     psicash::error::Result<std::string> result = psiCash->GetRewardedActivityData();
-    return [Result fromStringResult:result];
+    return [PSIResult fromStringResult:result];
 }
 
 - (NSString *)getDiagnosticInfo {
@@ -605,13 +605,13 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
     }
 }
 
-- (Result<StatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
+- (PSIResult<PSIStatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
     std::vector<std::string> purchase_classes = vecFromArray(purchaseClasses);
     psicash::error::Result<psicash::Status> result = psiCash->RefreshState(purchase_classes);
-    return [StatusWrapper fromResult:result];
+    return [PSIStatusWrapper fromResult:result];
 }
 
-- (Result<NewExpiringPurchaseResponse *> *)
+- (PSIResult<PSINewExpiringPurchaseResponse *> *)
 newExpiringPurchaseWithTransactionClass:(NSString *)transactionClass
 distinguisher:(NSString *)distinguisher
 expectedPrice:(int64_t)expectedPrice {
@@ -619,7 +619,7 @@ expectedPrice:(int64_t)expectedPrice {
                                                [distinguisher UTF8String],
                                                expectedPrice);
     
-    return [NewExpiringPurchaseResponse fromResult:result];
+    return [PSINewExpiringPurchaseResponse fromResult:result];
 }
 
 @end
