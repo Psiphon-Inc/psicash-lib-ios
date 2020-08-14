@@ -37,6 +37,7 @@
 		8D21FE7824E46CF200343D32 /* error.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE5224E46CF200343D32 /* error.cpp */; };
 		8D21FE7924E46CF200343D32 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE5324E46CF200343D32 /* base64.cpp */; };
 		8D21FE7A24E46CF200343D32 /* utils.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE5424E46CF200343D32 /* utils.hpp */; };
+		8D21FE7C24E6E97E00343D32 /* PsiCashLibWrapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE7B24E6E97E00343D32 /* PsiCashLibWrapperTests.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +97,7 @@
 		8D21FE5224E46CF200343D32 /* error.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = error.cpp; path = "psicash-lib-core/error.cpp"; sourceTree = "<group>"; };
 		8D21FE5324E46CF200343D32 /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = base64.cpp; path = "psicash-lib-core/base64.cpp"; sourceTree = "<group>"; };
 		8D21FE5424E46CF200343D32 /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = utils.hpp; path = "psicash-lib-core/utils.hpp"; sourceTree = "<group>"; };
+		8D21FE7B24E6E97E00343D32 /* PsiCashLibWrapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PsiCashLibWrapperTests.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -150,6 +152,7 @@
 		8D21FDBE24E45F9300343D32 /* PsiCashLibTests */ = {
 			isa = PBXGroup;
 			children = (
+				8D21FE7B24E6E97E00343D32 /* PsiCashLibWrapperTests.m */,
 				8D21FDBF24E45F9300343D32 /* PsiCashLibTests.m */,
 				8D21FDC124E45F9300343D32 /* Info.plist */,
 			);
@@ -344,6 +347,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D21FDC024E45F9300343D32 /* PsiCashLibTests.m in Sources */,
+				8D21FE7C24E6E97E00343D32 /* PsiCashLibWrapperTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

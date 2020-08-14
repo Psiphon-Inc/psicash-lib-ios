@@ -25,6 +25,15 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface Pair<Value> : NSObject
+
+@property (nonatomic) Value first;
+@property (nonatomic) Value second;
+
+@end
+
+
+
 @interface HTTPParams : NSObject
 
 @property (nonatomic, readonly) NSString *scheme;
@@ -33,7 +42,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *method;
 @property (nonatomic, readonly) NSString *path;
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *headers;
-@property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *query;
+@property (nonatomic, readonly) NSArray<Pair<NSString *> *> *query;
+
+/**
+ Creates complete URL including the query string.
+ */
+- (NSURL *)makeURL;
 
 @end
 
@@ -126,6 +140,17 @@ typedef NS_ENUM(NSInteger, Status) {
 @end
 
 
+// Enumeration of possible token types.
+@interface TokenType : NSObject
+
+@property (class, nonatomic, readonly, nonnull) NSString *earnerTokenType;
+@property (class, nonatomic, readonly, nonnull) NSString *spenderTokenType;
+@property (class, nonatomic, readonly, nonnull) NSString *indicatorTokenType;
+@property (class, nonatomic, readonly, nonnull) NSString *accountTokenType;
+
+@end
+
+
 @interface PsiCashLibWrapper : NSObject
 
 - (Error *_Nullable)initializeWithUserAgent:(NSString *)userAgent
@@ -169,11 +194,12 @@ typedef NS_ENUM(NSInteger, Status) {
 
 - (NSString *)getDiagnosticInfo;
 
-- (Result<StatusWrapper *> *)refreshState:(NSArray<NSString *> *)purchaseClasses WARN_UNUSED_RESULT;
+- (Result<StatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses WARN_UNUSED_RESULT;
 
-- (Result<NewExpiringPurchaseResponse *> *)newExpiringPurchase:(NSString *)transactionClass
-                                                 distinguisher:(NSString *)distinguisher
-                                                 expectedPrice:(int64_t)expectedPrice WARN_UNUSED_RESULT;
+- (Result<NewExpiringPurchaseResponse *> *)
+newExpiringPurchaseWithTransactionClass:(NSString *)transactionClass
+distinguisher:(NSString *)distinguisher
+expectedPrice:(int64_t)expectedPrice WARN_UNUSED_RESULT;
 
 @end
 

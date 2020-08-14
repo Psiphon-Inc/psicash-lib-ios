@@ -26,16 +26,4 @@
 
 @implementation PsiCashLibTests
 
-- (void)testHTTPParams {
-    HTTPParams *params = [[HTTPParams alloc] initWithScheme:@"scheme"
-                                                   hostname:@"hostname"
-                                                       port:80
-                                                     method:@"GET"
-                                                       path:@"/path"
-                                                    headers:@{@"header1": @"header1value"}
-                                                      query:@{@"query1": @"query1value"}];
-    
-    XCTAssertTrue([params.debugDescription isEqualToString:@"HTTPParams { scheme: scheme, hostname: hostname, port: 80 }"]);
-}
-
 @end

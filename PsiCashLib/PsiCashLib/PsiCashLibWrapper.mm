@@ -30,6 +30,21 @@ bool ObjcBOOL2bool(BOOL value) {
     return (value == YES) ? true : false;
 }
 
+#pragma mark - Pair
+
+@implementation Pair
+
+- (instancetype)initWith:(id)first :(id)second {
+    self = [super init];
+    if (self) {
+        _first = first;
+        _second = second;
+    }
+    return self;
+}
+
+@end
+
 #pragma mark - Helper function
 
 std::map<std::string, std::string> mapFromNSDictionary(NSDictionary<NSString *, NSString *> *_Nonnull dict) {
@@ -87,21 +102,20 @@ dictionaryFromMap(std::map<std::string, std::string> map) {
     return dict;
 }
 
-NSDictionary<NSString *, NSString *> *_Nonnull
-dictionaryFromVecPair(std::vector<std::pair<std::string, std::string>> vec) {
-    
-    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:vec.size()];
+NSArray<Pair<NSString *> *> *_Nonnull
+arrayFromVecPair(std::vector<std::pair<std::string, std::string>> vec) {
+    NSMutableArray<Pair<NSString *> *> *array = [NSMutableArray arrayWithCapacity:vec.size()];
     
     for (auto pair : vec) {
-        NSString *objcKey = [NSString stringWithUTF8String:pair.first.c_str()];
-        NSString *objcValue = [NSString stringWithUTF8String:pair.second.c_str()];
-        dict[objcKey] = objcValue;
+        NSString *first = [NSString stringWithUTF8String:pair.first.c_str()];
+        NSString *second = [NSString stringWithUTF8String:pair.second.c_str()];
+        [array addObject:[[Pair alloc] initWith:first :second]];
     }
     
-    return dict;
+    return array;
 }
 
-#pragma mark -
+#pragma mark - HTTPParams
 
 @implementation HTTPParams
 
@@ -114,9 +128,33 @@ dictionaryFromVecPair(std::vector<std::pair<std::string, std::string>> vec) {
         self->_method = [NSString stringWithUTF8String:params.method.c_str()];
         self->_path = [NSString stringWithUTF8String:params.path.c_str()];
         self->_headers = dictionaryFromMap(params.headers);
-        self->_query = dictionaryFromVecPair(params.query);
+        self->_query = arrayFromVecPair(params.query);
     }
     return self;
+}
+
+- (NSString *_Nonnull)makeQueryString {
+    NSMutableString *string = [NSMutableString stringWithString:@""];
+    for (int i = 0; i < self.query.count; i++) {
+        [string appendFormat:@"%@=%@", self.query[i].first, self.query[i].second];
+        if (i != self.query.count - 1) {
+            [string appendString:@"&"];
+        }
+    }
+    return string;
+}
+
+- (NSURL *)makeURL {
+    NSString *urlString;
+    NSString *queryString = [self makeQueryString];
+    
+    if ([queryString isEqualToString:@""]) {
+        urlString = [NSString stringWithFormat:@"%@://%@%@", self.scheme, self.hostname, self.path];
+    } else {
+        urlString = [NSString stringWithFormat:@"%@://%@%@?%@", self.scheme, self.hostname,
+                     self.path, [self makeQueryString]];
+    }
+    return [NSURL URLWithString:urlString];
 }
 
 @end
@@ -409,6 +447,27 @@ fromResult:(psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseResponse
 
 @end
 
+#pragma mark - Token types
+
+@implementation TokenType
+
++ (NSString *)earnerTokenType {
+    return [NSString stringWithUTF8String:psicash::kEarnerTokenType];
+}
+
++ (NSString *)spenderTokenType {
+    return [NSString stringWithUTF8String:psicash::kSpenderTokenType];
+}
+
++ (NSString *)indicatorTokenType {
+    return [NSString stringWithUTF8String:psicash::kIndicatorTokenType];
+}
++ (NSString *)accountTokenType {
+    return [NSString stringWithUTF8String:psicash::kAccountTokenType];
+}
+
+@end
+
 #pragma mark - PsiCashLibWrapper
 
 @implementation PsiCashLibWrapper {
@@ -540,15 +599,16 @@ fromResult:(psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseResponse
     return [NSString stringWithUTF8String:dump.c_str()];
 }
 
-- (Result<StatusWrapper *> *)refreshState:(NSArray<NSString *> *)purchaseClasses {
+- (Result<StatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
     std::vector<std::string> purchase_classes = vecFromArray(purchaseClasses);
     psicash::error::Result<psicash::Status> result = psiCash->RefreshState(purchase_classes);
     return [StatusWrapper fromResult:result];
 }
 
-- (Result<NewExpiringPurchaseResponse *> *)newExpiringPurchase:(NSString *)transactionClass
-                                                 distinguisher:(NSString *)distinguisher
-                                                 expectedPrice:(int64_t)expectedPrice {
+- (Result<NewExpiringPurchaseResponse *> *)
+newExpiringPurchaseWithTransactionClass:(NSString *)transactionClass
+distinguisher:(NSString *)distinguisher
+expectedPrice:(int64_t)expectedPrice {
     auto result = psiCash->NewExpiringPurchase([transactionClass UTF8String],
                                                [distinguisher UTF8String],
                                                expectedPrice);
