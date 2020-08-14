@@ -595,8 +595,14 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 - (NSString *)getDiagnosticInfo {
     nlohmann::json diagnostic = psiCash->GetDiagnosticInfo();
-    auto dump = diagnostic.dump(-1, ' ', true);
-    return [NSString stringWithUTF8String:dump.c_str()];
+    try {
+        auto dump = diagnostic.dump(-1, ' ', true);
+        return [NSString stringWithUTF8String:dump.c_str()];
+    } catch (nlohmann::json::exception& e) {
+        // Should never happen...
+        return [NSString stringWithFormat:@"error: id:'%d' cause:'%@'", e.id,
+                [NSString stringWithUTF8String:e.what()]];
+    }
 }
 
 - (Result<StatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
