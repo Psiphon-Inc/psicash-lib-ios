@@ -19,6 +19,7 @@
 
 #import "PsiCashLibWrapper.h"
 #include "psicash.hpp"
+#include "PsiCashTest.hpp"
 
 // Note that on 32-bit platforms `BOOL` is a `signed char`, whereas in 64-bit it is a `bool`.
 
@@ -90,7 +91,7 @@ std::vector<std::string> vecFromArray(NSArray<NSString *> *_Nonnull array) {
 
 NSDictionary<NSString *, NSString *> *_Nonnull
 dictionaryFromMap(const std::map<std::string, std::string>& map) {
-
+    
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:map.size()];
     
     for (auto pair : map) {
@@ -334,7 +335,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
         
         if (purchase.local_time_expiry.has_value()) {
             _iso8601LocalTimeExpiry = [NSString
-                                        stringWithUTF8String:purchase.local_time_expiry.value().ToISO8601().c_str()];
+                                       stringWithUTF8String:purchase.local_time_expiry.value().ToISO8601().c_str()];
         } else {
             _iso8601LocalTimeExpiry = nil;
         }
@@ -472,12 +473,14 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 @implementation PSIPsiCashLibWrapper {
     psicash::PsiCash *psiCash;
+    BOOL test;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         psiCash = new psicash::PsiCash();
+        test = FALSE;
     }
     return self;
 }
@@ -487,9 +490,10 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 }
 
 - (PSIError *_Nullable)initializeWithUserAgent:(NSString *)userAgent
-                           andFileStoreRoot:(NSString *)fileStoreRoot
-                            httpRequestFunc:(PSIHTTPResult * (^)(PSIHTTPParams *))httpRequestFunc
-                                       test:(BOOL)test {
+                                 fileStoreRoot:(NSString *)fileStoreRoot
+                               httpRequestFunc:(PSIHTTPResult * (^)(PSIHTTPParams *))httpRequestFunc
+                                          test:(BOOL)test {
+    self->test = test;
     psicash::error::Error err = psiCash->Init([userAgent UTF8String],
                                               [fileStoreRoot UTF8String],
                                               [httpRequestFunc](const psicash::HTTPParams& cppParams) -> psicash::HTTPResult {
@@ -510,7 +514,7 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 }
 
 - (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key
-                                 withValue:(NSString *)value {
+                                    withValue:(NSString *)value {
     psicash::error::Error err = psiCash->SetRequestMetadataItem([key UTF8String],
                                                                 [value UTF8String]);
     return [PSIError createFrom:err];
@@ -572,7 +576,8 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
     return [PSIPurchase fromResult:result];
 }
 
-- (PSIResult<NSArray<PSIPurchase *> *> *)removePurchases:(NSArray<NSString *> *)transactionIds {
+- (PSIResult<NSArray<PSIPurchase *> *> *)
+removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
     std::vector<std::string> transaction_ids = vecFromArray(transactionIds);
     psicash::error::Result<psicash::Purchases> result = psiCash->RemovePurchases(transaction_ids);
     return [PSIPurchase fromResult:result];
@@ -621,5 +626,23 @@ expectedPrice:(int64_t)expectedPrice {
     
     return [PSINewExpiringPurchaseResponse fromResult:result];
 }
+
+# pragma mark - Testing only
+#if DEBUG
+
+- (PSIError *_Nullable)testRewardWithClass:(NSString *)transactionClass
+                             distinguisher:(NSString *)distinguisher {
+    if (test == FALSE) {
+        return [[PSIError alloc] initWithCritical:TRUE
+                                      description:@"Not initialized in test mode"];
+    }
+    
+    PsiCashTest *client = (PsiCashTest *)self->psiCash;
+    psicash::error::Error err = client->TestReward([transactionClass UTF8String],
+                                                   [distinguisher UTF8String]);
+    return [PSIError createFrom:err];
+}
+
+#endif
 
 @end

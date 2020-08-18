@@ -38,6 +38,8 @@
 		8D21FE7924E46CF200343D32 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE5324E46CF200343D32 /* base64.cpp */; };
 		8D21FE7A24E46CF200343D32 /* utils.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE5424E46CF200343D32 /* utils.hpp */; };
 		8D21FE7C24E6E97E00343D32 /* PsiCashLibWrapperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE7B24E6E97E00343D32 /* PsiCashLibWrapperTests.m */; };
+		8D21FE8024EB2ECD00343D32 /* PsiCashTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE7E24EB2ECD00343D32 /* PsiCashTest.cpp */; };
+		8D21FE8124EB2ECD00343D32 /* PsiCashTest.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE7F24EB2ECD00343D32 /* PsiCashTest.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -99,6 +101,8 @@
 		8D21FE5424E46CF200343D32 /* utils.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = utils.hpp; path = "psicash-lib-core/utils.hpp"; sourceTree = "<group>"; };
 		8D21FE7B24E6E97E00343D32 /* PsiCashLibWrapperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PsiCashLibWrapperTests.m; sourceTree = "<group>"; };
 		8D21FE7D24E7305000343D32 /* SecretTestValues.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SecretTestValues.h; sourceTree = "<group>"; };
+		8D21FE7E24EB2ECD00343D32 /* PsiCashTest.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PsiCashTest.cpp; sourceTree = "<group>"; };
+		8D21FE7F24EB2ECD00343D32 /* PsiCashTest.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PsiCashTest.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +150,8 @@
 				8D21FDDF24E46B7F00343D32 /* PsiCashLibWrapper.mm */,
 				8D21FDB424E45F9300343D32 /* PsiCashLib.h */,
 				8D21FDB524E45F9300343D32 /* Info.plist */,
+				8D21FE7E24EB2ECD00343D32 /* PsiCashTest.cpp */,
+				8D21FE7F24EB2ECD00343D32 /* PsiCashTest.hpp */,
 			);
 			path = PsiCashLib;
 			sourceTree = "<group>";
@@ -213,6 +219,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D21FE8124EB2ECD00343D32 /* PsiCashTest.hpp in Headers */,
 				8D21FDE024E46B7F00343D32 /* PsiCashLibWrapper.h in Headers */,
 				8D21FE6A24E46CF200343D32 /* error.hpp in Headers */,
 				8D21FE7A24E46CF200343D32 /* utils.hpp in Headers */,
@@ -337,6 +344,7 @@
 				8D21FE7324E46CF200343D32 /* psicash.cpp in Sources */,
 				8D21FE5E24E46CF200343D32 /* utils.cpp in Sources */,
 				8D21FE6524E46CF200343D32 /* datetime.cpp in Sources */,
+				8D21FE8024EB2ECD00343D32 /* PsiCashTest.cpp in Sources */,
 				8D21FE7824E46CF200343D32 /* error.cpp in Sources */,
 				8D21FE5C24E46CF200343D32 /* url.cpp in Sources */,
 				8D21FE7924E46CF200343D32 /* base64.cpp in Sources */,

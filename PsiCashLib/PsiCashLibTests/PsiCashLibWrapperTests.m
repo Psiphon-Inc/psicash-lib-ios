@@ -19,6 +19,7 @@
 
 #import <XCTest/XCTest.h>
 #import "PsiCashLibWrapper.h"
+#import "SecretTestValues.h"
 
 NSErrorDomain const TestErrorDomain = @"PsiCashLibTest";
 
@@ -92,7 +93,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     lib = [[PSIPsiCashLibWrapper alloc] init];
     
     initErr = [lib initializeWithUserAgent:@"Psiphon-PsiCash-iOS"
-                          andFileStoreRoot:tempDir.path
+                          fileStoreRoot:tempDir.path
                  httpRequestFunc:^PSIHTTPResult * _Nonnull(PSIHTTPParams * _Nonnull params) {
         
         self->lastParams = params;
@@ -146,18 +147,6 @@ typedef NS_ENUM(NSInteger, TestError) {
     return TRUE;
 }
 
-// Refreshes PsiCash state.
-- (void)refreshState:(NSArray<NSString *> *_Nonnull)purchaseClasses {
-    // Act
-    PSIResult<PSIStatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses];
-    
-    // Assert
-    XCTAssert(result != nil);
-    XCTAssert(result.failure == nil);
-    XCTAssert(result.success != nil);
-    XCTAssert(result.success.status == PSIStatusSuccess);
-}
-
 - (BOOL)tearDownWithError:(NSError *__autoreleasing  _Nullable *)error {
     BOOL success = [[NSFileManager defaultManager] removeItemAtURL:tempDir error:error];
     if (*error != nil) {
@@ -175,6 +164,34 @@ typedef NS_ENUM(NSInteger, TestError) {
     lastParams = nil;
     return TRUE;
 }
+
+#pragma mark - Helper functions
+
+// Refreshes PsiCash state.
+- (void)refreshState:(NSArray<NSString *> *_Nonnull)purchaseClasses {
+    // Act
+    PSIResult<PSIStatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses];
+    
+    // Assert
+    XCTAssert(result != nil);
+    XCTAssert(result.failure == nil);
+    XCTAssert(result.success != nil);
+    XCTAssert(result.success.status == PSIStatusSuccess);
+}
+
+- (void)rewardInTrillions:(int)trillions {
+    for (int i = 0; i < trillions; i++) {
+        if (i != 0) {
+            [NSThread sleepForTimeInterval:1.0];
+        }
+        
+        PSIError *err = [lib testRewardWithClass:@TEST_CREDIT_TRANSACTION_CLASS
+                                   distinguisher:@TEST_ONE_TRILLION_ONE_MICROSECOND_DISTINGUISHER];
+        XCTAssert(err == nil);
+    }
+}
+
+#pragma mark - Tests
 
 - (void)testInitialized {
     XCTAssert(initErr == nil);
@@ -243,11 +260,29 @@ typedef NS_ENUM(NSInteger, TestError) {
     }
 }
 
-- (void)testBalance {
+- (void)testBalanceUnrefreshed {
     XCTAssert(lib.balance == 0);
-    
+}
+
+- (void)testBalanceFirstRefresh {
+    // Act
     [self refreshState:@[]];
     
+    // Assert
+    XCTAssert(lib.balance == 90000000000);
+}
+
+- (void)testBalanceAfterReward {
+    // Arrange
+    XCTAssert(lib.balance == 0);
+    [self refreshState:@[]];
+    
+    // Act
+    PSIError *err = [lib testRewardWithClass:@TEST_CREDIT_TRANSACTION_CLASS
+                               distinguisher:@TEST_ONE_TRILLION_ONE_MICROSECOND_DISTINGUISHER];
+    
+    // Assert
+    XCTAssert(err == nil);
     XCTAssert(lib.balance == 90000000000);
 }
 
@@ -308,7 +343,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testRemovePurchasesWithoutPurchase {
     // Act
-    PSIResult<NSArray<PSIPurchase *> *> *result = [lib removePurchases:@[]];
+    PSIResult<NSArray<PSIPurchase *> *> *result = [lib removePurchasesWithTransactionID:@[]];
     
     // Assert
     XCTAssert(result.failure == nil);
@@ -374,6 +409,8 @@ typedef NS_ENUM(NSInteger, TestError) {
     // Arrange
     [self refreshState:@[@"speed-boost"]];
     NSArray<PSIPurchasePrice *> *purchasePrices = [lib getPurchasePrices];
+    XCTAssert(purchasePrices != nil);
+    XCTAssert(purchasePrices.count > 0);
     PSIPurchasePrice *itemToBuy = purchasePrices[0];
     
     // Act
@@ -388,6 +425,89 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result.success != nil);
     XCTAssert(result.success.status == PSIStatusInsufficientBalance);
     XCTAssert(result.success.purchase == nil);
+}
+
+- (void)testPurchaseAndExpire {
+    // Arrange
+    XCTAssert(lib.balance == 0);
+    [self refreshState:@[@"speed-boost"]];
+    XCTAssert(lib.validTokenTypes.count >= 3);
+    [self rewardInTrillions:3];
+    
+    // Get products.
+    NSArray<PSIPurchasePrice*> *purchasePrices = [lib getPurchasePrices];
+    XCTAssert(purchasePrices.count > 0);
+    PSIPurchasePrice *purchasePrice = purchasePrices[0];
+    
+    // Makes purchase
+    PSIResult<PSINewExpiringPurchaseResponse *> *result =
+    [lib newExpiringPurchaseWithTransactionClass:purchasePrice.transactionClass
+                                   distinguisher:purchasePrice.distinguisher
+                                   expectedPrice:purchasePrice.price];
+    
+    XCTAssert(result != nil);
+    XCTAssert(result.failure == nil);
+    XCTAssert(result.success != nil);
+    XCTAssert(result.success.status == PSIStatusSuccess);
+    
+    // Checks purchases
+    NSArray<PSIPurchase *> *purchases = [lib getPurchases];
+    XCTAssert(purchases != nil);
+    XCTAssert(purchases.count == 1);
+    XCTAssert(purchases[0].transactionID.length > 0);
+    XCTAssert([purchases[0].transactionClass isEqualToString:@"speed-boost"]);
+    XCTAssert([purchases[0].distinguisher isEqualToString:@"1hr"]);
+    XCTAssert(purchases[0].iso8601ServerTimeExpiry.length > 0);
+    XCTAssert(purchases[0].iso8601LocalTimeExpiry.length > 0);
+    XCTAssert(purchases[0].authorization.ID.length > 0);
+    XCTAssert([purchases[0].authorization.accessType isEqualToString:@"speed-boost-test"]);
+    XCTAssert(purchases[0].authorization.iso8601Expires.length > 0);
+    XCTAssert(purchases[0].authorization.encoded.length > 0);
+    
+    // Checks active purchase and ensure it's the same as `purchases[0]`.
+    NSArray<PSIPurchase *> *activePurchases = [lib activePurchases];
+    XCTAssert(activePurchases != nil);
+    XCTAssert(activePurchases.count == 1);
+    XCTAssert([activePurchases[0].transactionID isEqualToString:purchases[0].transactionID]);
+    XCTAssert([activePurchases[0].authorization.ID isEqualToString:purchases[0].authorization.ID]);
+
+    
+    // Checks getAuthorizationsWithActiveOnly
+    NSArray<PSIAuthorization *> *auths = [lib getAuthorizationsWithActiveOnly:TRUE];
+    XCTAssert(auths != nil);
+    XCTAssert(auths.count == 1);
+    XCTAssert([auths[0].encoded isEqualToString:activePurchases[0].authorization.encoded]);
+    
+    // Checks getPurchasesByAuthorizationID
+    NSArray<PSIPurchase *> *purchaseByAuth = [lib getPurchasesByAuthorizationID:@[auths[0].ID]];
+    XCTAssert(purchaseByAuth != nil);
+    XCTAssert(purchaseByAuth.count == 1);
+    XCTAssert([purchaseByAuth[0].transactionID isEqualToString:purchases[0].transactionID]);
+    XCTAssert([purchaseByAuth[0].authorization.encoded isEqualToString:auths[0].encoded]);
+    
+    // Checks next expiring purchase
+    PSIPurchase *nextExpiringPurchase = [lib nextExpiringPurchase];
+    XCTAssert(nextExpiringPurchase != nil);
+    XCTAssert([nextExpiringPurchase.transactionID
+               isEqualToString:activePurchases[0].transactionID]);
+    
+    // Artificially expires the purchase (even if the local clock hasn't indicated yet).
+    PSIResult<NSArray<PSIPurchase *> *> *resultRemoving =
+    [lib removePurchasesWithTransactionID:@[nextExpiringPurchase.transactionID]];
+    
+    XCTAssert(resultRemoving != nil);
+    XCTAssert(resultRemoving.failure == nil);
+    XCTAssert(resultRemoving.success != nil);
+    XCTAssert(resultRemoving.success.count == 1);
+    XCTAssert([resultRemoving.success[0].transactionID
+               isEqualToString: nextExpiringPurchase.transactionID]);
+    XCTAssert([lib nextExpiringPurchase] == nil); // The only purchase has been expired.
+    
+    // Checks expirePurchases
+    PSIResult<NSArray<PSIPurchase *> *> *expireResult = [lib expirePurchases];
+    XCTAssert(expireResult != nil);
+    XCTAssert(expireResult.failure == nil);
+    XCTAssert(expireResult.success != nil);
 }
 
 @end
