@@ -122,7 +122,14 @@ typedef NS_ENUM(NSInteger, TestError) {
                                                   error:[error description]];
             } else {
                 NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-                NSString *dateHeader = [httpResponse valueForHTTPHeaderField:@"Date"];
+                NSString *dateHeader = nil;
+                
+                if (@available(iOS 13.0, *)) {
+                    dateHeader = [httpResponse valueForHTTPHeaderField:@"Date"];
+                } else {
+                    // Fallback on earlier versions
+                    dateHeader = [httpResponse allHeaderFields][@"Date"];
+                }
                 
                 NSString *body = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
              
