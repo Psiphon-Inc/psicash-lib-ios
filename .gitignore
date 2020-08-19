@@ -1,3 +1,6 @@
+# Build artifacts
+build-git-commit.txt
+
 .DS_Store
 xcuserdata
 build/
