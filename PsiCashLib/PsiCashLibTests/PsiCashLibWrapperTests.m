@@ -18,7 +18,7 @@
  */
 
 #import <XCTest/XCTest.h>
-#import "PsiCashLibWrapper.h"
+#import <PsiCashLib/PsiCashLib.h>
 #import "SecretTestValues.h"
 
 NSErrorDomain const TestErrorDomain = @"PsiCashLibTest";

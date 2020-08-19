@@ -10,7 +10,7 @@
 		8D21FDBB24E45F9300343D32 /* PsiCashLib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D21FDB124E45F9300343D32 /* PsiCashLib.framework */; };
 		8D21FDC024E45F9300343D32 /* PsiCashLibTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FDBF24E45F9300343D32 /* PsiCashLibTests.m */; };
 		8D21FDC224E45F9300343D32 /* PsiCashLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FDB424E45F9300343D32 /* PsiCashLib.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		8D21FDE024E46B7F00343D32 /* PsiCashLibWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FDDE24E46B7F00343D32 /* PsiCashLibWrapper.h */; };
+		8D21FDE024E46B7F00343D32 /* PsiCashLibWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FDDE24E46B7F00343D32 /* PsiCashLibWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8D21FDE124E46B7F00343D32 /* PsiCashLibWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FDDF24E46B7F00343D32 /* PsiCashLibWrapper.mm */; };
 		8D21FE5524E46CF200343D32 /* datetime.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE2F24E46CF100343D32 /* datetime.hpp */; };
 		8D21FE5924E46CF200343D32 /* vendor in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE3324E46CF100343D32 /* vendor */; };
