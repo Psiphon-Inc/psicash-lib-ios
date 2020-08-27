@@ -188,6 +188,14 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     return self;
 }
 
+- (instancetype)initWithCriticalError {
+    return [self initWithCode:[PSIHTTPResult CRITICAL_ERROR] body:@"" date:@"" error:@""];
+}
+
+- (instancetype)initWithRecoverableError {
+    return [self initWithCode:[PSIHTTPResult RECOVERABLE_ERROR] body:@"" date:@"" error:@""];
+}
+
 - (psicash::HTTPResult)cppHttpResult {
     return result;
 }
