@@ -238,6 +238,25 @@ typedef NS_ENUM(NSInteger, TestError) {
                                                  // reset and there are no tokens.
 }
 
+- (void)testMigrateToken {
+    // Arrange
+    NSDictionary<NSString *, NSString *> *tokens = @{
+        PSITokenType.earnerTokenType:
+            @"d31b70ac051a28a2f758e5ec12fa5cbdf7a13bf9a00beb293fdec5bc249b36f9",
+        PSITokenType.indicatorTokenType:
+            @"9330841355ebb06457a42eebcf4ae99caca402bc9e0edb531ad24576ee4b8b2c",
+        PSITokenType.spenderTokenType:
+            @"ffb3588957b3581705da824826038a6c578d79cbca1c6debd44657a1d0392562"
+    };
+    XCTAssert([lib validTokenTypes].count == 0);
+    
+    // Act
+    [lib migrateTokens:tokens isAccount:TRUE];
+    
+    // Assert
+    XCTAssert([lib validTokenTypes].count == 3);
+}
+
 - (void)testSetRequestMetadataItem {
     // Arrange
     PSIError *err1 = [lib setRequestMetadataItem:@"metadata_key_1" withValue:@"metadata_value_1"];

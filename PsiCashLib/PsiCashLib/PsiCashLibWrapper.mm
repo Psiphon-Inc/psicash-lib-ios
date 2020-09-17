@@ -568,6 +568,13 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
     return [PSIError createFrom:error];
 }
 
+- (PSIError *_Nullable)migrateTokens:(NSDictionary<NSString *, NSString *> *_Nonnull)tokens
+                           isAccount:(BOOL)isAccount {
+    std::map<std::string, std::string> _tokens = mapFromNSDictionary(tokens);
+    psicash::error::Error err = psiCash->MigrateTokens(_tokens, bool2ObjcBOOL(isAccount));
+    return [PSIError createFrom:err];
+}
+
 - (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key
                                     withValue:(NSString *)value {
     psicash::error::Error err = psiCash->SetRequestMetadataItem([key UTF8String],

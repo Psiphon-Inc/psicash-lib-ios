@@ -211,6 +211,12 @@ typedef NS_ENUM(NSInteger, PSIStatus) {
 /// be called when wanting to revert to a Tracker from a previously logged in Account.
 - (PSIError *_Nullable)resetUser;
 
+/// Forces the given tokens and account status to be set in the datastore. Must be
+/// called after Init(). RefreshState() must be called after method (and shouldn't be
+/// be called before this method, although behaviour will be okay).
+- (PSIError *_Nullable)migrateTokens:(NSDictionary<NSString *, NSString *> *)tokens
+                           isAccount:(BOOL)isAccount;
+
 /// Set values that will be included in the request metadata. This includes
 /// client_version, client_region, sponsor_id, and propagation_channel_id.
 - (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key withValue:(NSString *)value WARN_UNUSED_RESULT;
