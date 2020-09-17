@@ -118,7 +118,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 
 #pragma mark - HTTPParams
 
-@implementation PSIHTTPParams
+@implementation PSIHttpRequest
 
 - (instancetype)initWithCppHTTPParams:(const psicash::HTTPParams&)params {
     self = [super init];
@@ -130,6 +130,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
         self->_path = [NSString stringWithUTF8String:params.path.c_str()];
         self->_headers = dictionaryFromMap(params.headers);
         self->_query = arrayFromVecPair(params.query);
+        self->_body = [NSString stringWithUTF8String:params.body.c_str()];
     }
     return self;
 }
@@ -162,7 +163,7 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 
 #pragma mark - HTTPResult
 
-@implementation PSIHTTPResult {
+@implementation PSIHttpResult {
     psicash::HTTPResult result;
 }
 
@@ -189,11 +190,11 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 }
 
 - (instancetype)initWithCriticalError {
-    return [self initWithCode:[PSIHTTPResult CRITICAL_ERROR] body:@"" date:@"" error:@""];
+    return [self initWithCode:[PSIHttpResult CRITICAL_ERROR] body:@"" date:@"" error:@""];
 }
 
 - (instancetype)initWithRecoverableError {
-    return [self initWithCode:[PSIHTTPResult RECOVERABLE_ERROR] body:@"" date:@"" error:@""];
+    return [self initWithCode:[PSIHttpResult RECOVERABLE_ERROR] body:@"" date:@"" error:@""];
 }
 
 - (psicash::HTTPResult)cppHttpResult {
@@ -406,6 +407,10 @@ PSIStatus statusFromStatus(const psicash::Status& status) {
             return PSIStatusTransactionTypeNotFound;
         case psicash::Status::InvalidTokens:
             return PSIStatusInvalidTokens;
+        case psicash::Status::InvalidCredentials:
+            return PSIStatusInvalidCredentials;
+        case psicash::Status::BadRequest:
+            return PSIStatusBadRequest;
         case psicash::Status::ServerError:
             return PSIStatusServerError;
     }
@@ -456,6 +461,37 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 @end
 
+#pragma mark - AccountLoginResponse
+
+@implementation PSIAccountLoginResponse
+
+- (instancetype)initWith:(const psicash::PsiCash::AccountLoginResponse&)value {
+    self = [super init];
+    if (self) {
+        _status = statusFromStatus(value.status);
+        
+        if (value.last_tracker_merge.has_value()) {
+            _lastTrackerMerge = [NSNumber numberWithBool:
+                                 bool2ObjcBOOL(value.last_tracker_merge.value())];
+        } else {
+            _lastTrackerMerge = nil;
+        }
+         
+    }
+    return self;
+}
+
++ (PSIResult<PSIAccountLoginResponse *> *_Nonnull)fromResult:
+(const psicash::error::Result<psicash::PsiCash::AccountLoginResponse>&)result {
+    if (result.has_value()) {
+        return [PSIResult success:[[PSIAccountLoginResponse alloc] initWith:result.value()]];
+    } else {
+        return [PSIResult failure:[PSIError createOrThrow:result.error()]];
+    }
+}
+
+@end
+
 #pragma mark - Token types
 
 @implementation PSITokenType
@@ -499,26 +535,44 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 - (PSIError *_Nullable)initializeWithUserAgent:(NSString *)userAgent
                                  fileStoreRoot:(NSString *)fileStoreRoot
-                               httpRequestFunc:(PSIHTTPResult * (^)(PSIHTTPParams *))httpRequestFunc
+                               httpRequestFunc:(PSIHttpResult * (^_Nullable)(PSIHttpRequest *))httpRequestFunc
+                                    forceReset:(BOOL)forceReset
                                           test:(BOOL)test {
     self->test = test;
-    psicash::error::Error err = psiCash->Init([userAgent UTF8String],
-                                              [fileStoreRoot UTF8String],
-                                              [httpRequestFunc](const psicash::HTTPParams& cppParams) -> psicash::HTTPResult {
-        return [httpRequestFunc([[PSIHTTPParams alloc] initWithCppHTTPParams:cppParams])
-                cppHttpResult];
-    }, ObjcBOOL2bool(test));
+    psicash::error::Error err;
+    
+    if (httpRequestFunc == nil) {
+        
+        err = psiCash->Init([userAgent UTF8String], [fileStoreRoot UTF8String],
+                            nil, ObjcBOOL2bool(forceReset), ObjcBOOL2bool(test));
+    } else {
+
+        err = psiCash->Init([userAgent UTF8String],
+                            [fileStoreRoot UTF8String],
+                            [httpRequestFunc](const psicash::HTTPParams& cppParams) -> psicash::HTTPResult {
+            return [httpRequestFunc([[PSIHttpRequest alloc] initWithCppHTTPParams:cppParams])
+                    cppHttpResult];
+        }, ObjcBOOL2bool(forceReset), ObjcBOOL2bool(test));
+        
+    }
     
     return [PSIError createFrom:err];
 }
 
-- (PSIError *_Nullable)resetWithFileStoreRoot:(NSString *)fileStoreRoot test:(BOOL)test {
-    psicash::error::Error error = psiCash->Reset([fileStoreRoot UTF8String], ObjcBOOL2bool(test));
+- (BOOL)initialized {
+    return bool2ObjcBOOL(psiCash->Initialized());
+}
+
+- (PSIError *_Nullable)resetUser {
+    psicash::error::Error error = psiCash->ResetUser();
     return [PSIError createFrom:error];
 }
 
-- (BOOL)initialized {
-    return bool2ObjcBOOL(psiCash->Initialized());
+- (PSIError *_Nullable)migrateTokens:(NSDictionary<NSString *, NSString *> *_Nonnull)tokens
+                           isAccount:(BOOL)isAccount {
+    std::map<std::string, std::string> _tokens = mapFromNSDictionary(tokens);
+    psicash::error::Error err = psiCash->MigrateTokens(_tokens, bool2ObjcBOOL(isAccount));
+    return [PSIError createFrom:err];
 }
 
 - (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key
@@ -633,6 +687,17 @@ expectedPrice:(int64_t)expectedPrice {
                                                expectedPrice);
     
     return [PSINewExpiringPurchaseResponse fromResult:result];
+}
+
+- (PSIError *_Nullable)accountLogout {
+    psicash::error::Error error = psiCash->AccountLogout();
+    return [PSIError createFrom:error];
+}
+
+- (PSIResult<PSIAccountLoginResponse *> *)accountLoginWithUsername:(NSString *)username
+                                                       andPassword:(NSString *)password {
+    auto result = psiCash->AccountLogin([username UTF8String], [password UTF8String]);
+    return [PSIAccountLoginResponse fromResult:result];
 }
 
 # pragma mark - Testing only
