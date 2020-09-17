@@ -30,10 +30,12 @@ using namespace psicash;
 // Copied from https://github.com/Psiphon-Inc/psicash-lib-android/blob/f6ada9c7e8e87dd93086e267770627e3b53b4c17/psicashlib/src/main/cpp/jnitest.cpp#L30-L43
 
 error::Error PsiCashTest::TestReward(const string& transaction_class, const string& distinguisher) {
-    auto result = MakeHTTPRequestWithRetry(
-            "POST", "/transaction", true,
-            {{"class",         transaction_class},
-             {"distinguisher", distinguisher}});
+    auto result = MakeHTTPRequestWithRetry("POST",
+                                           "/transaction",
+                                           true,
+                                           {{"class", transaction_class}, {"distinguisher", distinguisher}},
+                                           nonstd::nullopt // no body.
+                                           );
     if (!result) {
         return WrapError(result.error(), "MakeHTTPRequestWithRetry failed");
     } else if (result->code != kHTTPStatusOK) {

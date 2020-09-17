@@ -1,3 +1,4 @@
 [submodule "PsiCashLib/psicash-lib-core"]
 	path = PsiCashLib/psicash-lib-core
-	url = https://github.com/Psiphon-Inc/psicash-lib-core.git
+	url = https://github.com/adam-p/psicash-lib-core.git
+	branch = accounts

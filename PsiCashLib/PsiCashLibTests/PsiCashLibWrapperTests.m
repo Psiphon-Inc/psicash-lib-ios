@@ -21,6 +21,8 @@
 #import <PsiCashLib/PsiCashLib.h>
 #import "SecretTestValues.h"
 
+NSString *const PsiCashUserAgent = @"Psiphon-PsiCash-iOS";
+NSString *const SpeedBoostPurchaseClass = @"speed-boost";
 NSErrorDomain const TestErrorDomain = @"PsiCashLibTest";
 
 typedef NS_ENUM(NSInteger, TestError) {
@@ -39,7 +41,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     dispatch_semaphore_t sema;
     PSIPsiCashLibWrapper *lib;
     PSIError *initErr;
-    PSIHTTPParams *lastParams;
+    PSIHttpRequest *lastHttpRequest;
     NSURL *tempDir;
 }
 
@@ -92,31 +94,32 @@ typedef NS_ENUM(NSInteger, TestError) {
     
     lib = [[PSIPsiCashLibWrapper alloc] init];
     
-    initErr = [lib initializeWithUserAgent:@"Psiphon-PsiCash-iOS"
+    initErr = [lib initializeWithUserAgent:PsiCashUserAgent
                           fileStoreRoot:tempDir.path
-                 httpRequestFunc:^PSIHTTPResult * _Nonnull(PSIHTTPParams * _Nonnull params) {
+                 httpRequestFunc:^PSIHttpResult * _Nonnull(PSIHttpRequest * _Nonnull value) {
         
-        self->lastParams = params;
+        self->lastHttpRequest = value;
         
         if (self.httpRequestsDryRun == TRUE) {
-            return [[PSIHTTPResult alloc] initWithCode:[PSIHTTPResult CRITICAL_ERROR]
+            return [[PSIHttpResult alloc] initWithCode:[PSIHttpResult CRITICAL_ERROR]
                                                body:@"" date:@"" error:@"dry-run"];
         }
         
         NSMutableURLRequest *request =
-        [NSMutableURLRequest requestWithURL:[params makeURL]
+        [NSMutableURLRequest requestWithURL:[value makeURL]
                                 cachePolicy:NSURLRequestReloadIgnoringCacheData
                             timeoutInterval:60.0];
         
-        [request setHTTPMethod:params.method];
-        [request setAllHTTPHeaderFields:params.headers];
+        [request setHTTPMethod:value.method];
+        [request setAllHTTPHeaderFields:value.headers];
+        [request setHTTPBody:[value.body dataUsingEncoding:NSUTF8StringEncoding]];
 
-        PSIHTTPResult *__block result;
+        PSIHttpResult *__block result;
         
         NSURLSessionDataTask *task = [NSURLSession.sharedSession dataTaskWithRequest:request completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error) {
             
             if (error != nil) {
-                result = [[PSIHTTPResult alloc] initWithCode:PSIHTTPResult.RECOVERABLE_ERROR
+                result = [[PSIHttpResult alloc] initWithCode:PSIHttpResult.RECOVERABLE_ERROR
                                                    body:@""
                                                    date:@""
                                                   error:[error description]];
@@ -133,7 +136,7 @@ typedef NS_ENUM(NSInteger, TestError) {
                 
                 NSString *body = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
              
-                result = [[PSIHTTPResult alloc] initWithCode:(int)httpResponse.statusCode
+                result = [[PSIHttpResult alloc] initWithCode:(int)httpResponse.statusCode
                                                        body:body
                                                        date:dateHeader
                                                       error:@""];
@@ -149,7 +152,7 @@ typedef NS_ENUM(NSInteger, TestError) {
         
         return result;
         
-    } test:TRUE];
+    } forceReset:FALSE test:TRUE];
     
     return TRUE;
 }
@@ -168,7 +171,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     sema = nil;
     lib = nil;
     initErr = nil;
-    lastParams = nil;
+    lastHttpRequest = nil;
     return TRUE;
 }
 
@@ -184,6 +187,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result.failure == nil);
     XCTAssert(result.success != nil);
     XCTAssert(result.success.status == PSIStatusSuccess);
+    XCTAssert([lib validTokenTypes].count > 0);
 }
 
 - (void)rewardInTrillions:(int)trillions {
@@ -205,12 +209,33 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert([lib initialized] == TRUE);
 }
 
-- (void)testReset {
+- (void)testForceReset {
+    // Arrange
+    [self refreshState:@[SpeedBoostPurchaseClass]];
+    NSError *err;
+    NSArray<NSString *> *contents = [NSFileManager.defaultManager
+                                     contentsOfDirectoryAtPath:tempDir.path
+                                     error:&err];
+    
+    XCTAssert(err == nil);
+    XCTAssert(contents.count == 1);
+    XCTAssertTrue([contents isEqualToArray:@[@"psicashdatastore.dev"]]);
+    XCTAssert([lib validTokenTypes].count == 3);
+    
     // Act
-    PSIError *error = [lib resetWithFileStoreRoot:tempDir.path test:TRUE];
+    lib = nil;
+    lib = [[PSIPsiCashLibWrapper alloc] init];
+    initErr = [lib initializeWithUserAgent:@"Psiphon-PsiCash"
+                             fileStoreRoot:tempDir.path
+                           httpRequestFunc:nil
+                                forceReset:TRUE
+                                      test:TRUE];
     
     // Assert
-    XCTAssert(error == nil);
+    XCTAssert(initErr == nil);
+    XCTAssert([lib initialized] == TRUE);
+    XCTAssert([lib validTokenTypes].count == 0); // Indicates that the datastore has been
+                                                 // reset and there are no tokens.
 }
 
 - (void)testSetRequestMetadataItem {
@@ -227,7 +252,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(err2 == nil);
     XCTAssert(result.success == nil);
     XCTAssert(result.failure != nil);
-    XCTAssertTrue([lastParams.headers[@"X-PsiCash-Metadata"] isEqualToString:@"{\"attempt\":1,\"metadata_key_1\":\"metadata_value_1\",\"metadata_key_2\":\"metadata_value_2\",\"user_agent\":\"Psiphon-PsiCash-iOS\",\"v\":1}"]);
+    XCTAssertTrue([lastHttpRequest.headers[@"X-PsiCash-Metadata"] isEqualToString:@"{\"attempt\":1,\"metadata_key_1\":\"metadata_value_1\",\"metadata_key_2\":\"metadata_value_2\",\"user_agent\":\"Psiphon-PsiCash-iOS\",\"v\":1}"]);
 }
 
 - (void)testValidTokenTypesBeforeRefresh {
@@ -295,13 +320,13 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testGetPurchasePrices {
     // Act
-    [self refreshState:@[@"speed-boost"]];
+    [self refreshState:@[SpeedBoostPurchaseClass]];
     NSArray<PSIPurchasePrice *> *array = [lib getPurchasePrices];
     
     // Assert
     XCTAssert(array != nil);
     XCTAssert(array.count > 0);
-    XCTAssert([array[0].transactionClass isEqualToString:@"speed-boost"]);
+    XCTAssert([array[0].transactionClass isEqualToString:SpeedBoostPurchaseClass]);
 }
 
 - (void)testGetPurchasesWithoutPurchase {
@@ -409,12 +434,12 @@ typedef NS_ENUM(NSInteger, TestError) {
     
     // Assert
     XCTAssert(info != nil);
-    XCTAssert([info isEqualToString:@"{\"balance\":0,\"isAccount\":false,\"purchasePrices\":[],\"purchases\":[],\"serverTimeDiff\":0,\"test\":true,\"validTokenTypes\":[]}"]);
+    XCTAssert([info isEqualToString:@"{\"balance\":0,\"isAccount\":false,\"isLoggedOutAccount\":false,\"purchasePrices\":[],\"purchases\":[],\"serverTimeDiff\":0,\"test\":true,\"validTokenTypes\":[]}"]);
 }
 
 - (void)testExpiringPurchaseWithInsufficientBalance {
     // Arrange
-    [self refreshState:@[@"speed-boost"]];
+    [self refreshState:@[SpeedBoostPurchaseClass]];
     NSArray<PSIPurchasePrice *> *purchasePrices = [lib getPurchasePrices];
     XCTAssert(purchasePrices != nil);
     XCTAssert(purchasePrices.count > 0);
@@ -437,7 +462,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testPurchaseAndExpire {
     // Arrange
     XCTAssert(lib.balance == 0);
-    [self refreshState:@[@"speed-boost"]];
+    [self refreshState:@[SpeedBoostPurchaseClass]];
     XCTAssert(lib.validTokenTypes.count >= 3);
     [self rewardInTrillions:3];
     
@@ -462,7 +487,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(purchases != nil);
     XCTAssert(purchases.count == 1);
     XCTAssert(purchases[0].transactionID.length > 0);
-    XCTAssert([purchases[0].transactionClass isEqualToString:@"speed-boost"]);
+    XCTAssert([purchases[0].transactionClass isEqualToString:SpeedBoostPurchaseClass]);
     XCTAssert([purchases[0].distinguisher isEqualToString:@"1hr"]);
     XCTAssert(purchases[0].iso8601ServerTimeExpiry.length > 0);
     XCTAssert(purchases[0].iso8601LocalTimeExpiry.length > 0);
@@ -515,6 +540,80 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(expireResult != nil);
     XCTAssert(expireResult.failure == nil);
     XCTAssert(expireResult.success != nil);
+}
+
+#pragma mark - Account login tests
+
+- (void)helperLogin {
+    // Act
+    PSIResult<PSIAccountLoginResponse *> *result =
+    [lib accountLoginWithUsername:@TEST_ACCOUNT_ONE_USERNAME
+                      andPassword:@TEST_ACCOUNT_ONE_PASSWORD];
+    
+    // Assert
+    XCTAssert(result != nil);
+    XCTAssert(result.failure == nil);
+    XCTAssert(result.success != nil);
+    XCTAssert(result.success.status == PSIStatusSuccess);
+    XCTAssert(result.success.lastTrackerMerge == nil);
+}
+
+// Tests logging in with a tracker already in place.
+- (void)testLoginWithoutTracker {
+    // Act, Assert
+    [self helperLogin];
+    XCTAssert([lib isAccount] == TRUE);
+    XCTAssert([lib validTokenTypes].count > 0);
+}
+
+- (void)testLoginWithTracker {
+    // Arrange
+    [self refreshState:@[SpeedBoostPurchaseClass]]; // get tracker tokens
+    XCTAssert([lib isAccount] == FALSE);
+    
+    // Act
+    [self helperLogin];
+    
+    // Assert
+    XCTAssert([lib isAccount] == TRUE);
+    XCTAssert([lib validTokenTypes].count >= 3);
+}
+
+- (void)testAccountLogout {
+    // Arrange
+    [self helperLogin];
+    
+    // Act
+    [lib accountLogout];
+
+    // Assert
+    XCTAssert([lib isAccount] == TRUE);
+    XCTAssert([lib validTokenTypes].count < 3);
+}
+
+- (void)testResetUserWithTrackerOnly {
+    // Arrange
+    [self refreshState:@[SpeedBoostPurchaseClass]]; // get tracker tokens
+    
+    // Act
+    [lib resetUser];
+    
+    // Assert
+    XCTAssert([lib validTokenTypes].count == 0);
+}
+
+- (void)testResetUserWithAccount {
+    // Arrange
+    [self helperLogin];
+    
+    XCTAssert([lib isAccount] == TRUE);
+    
+    // Act
+    [lib resetUser];
+    
+    // Assert
+    XCTAssert([lib isAccount] == FALSE);
+    XCTAssert([lib validTokenTypes].count == 0);
 }
 
 @end
