@@ -40,6 +40,7 @@ bool ObjcBOOL2bool(BOOL value) {
     if (self) {
         _first = first;
         _second = second;
+        
     }
     return self;
 }
@@ -48,7 +49,8 @@ bool ObjcBOOL2bool(BOOL value) {
 
 #pragma mark - Helper function
 
-std::map<std::string, std::string> mapFromNSDictionary(NSDictionary<NSString *, NSString *> *_Nonnull dict) {
+std::map<std::string, std::string>
+dictToCppMap(NSDictionary<NSString *, NSString *> *_Nullable dict) {
     std::map<std::string, std::string> map;
     
     for (NSString *key in dict) {
@@ -60,19 +62,7 @@ std::map<std::string, std::string> mapFromNSDictionary(NSDictionary<NSString *, 
     return map;
 }
 
-std::vector<std::pair<std::string, std::string>> vecFromNSDictionary(NSDictionary<NSString *, NSString *> *_Nonnull dict) {
-    std::vector<std::pair<std::string, std::string>> vec;
-    
-    for (NSString *key in dict) {
-        std::string cppKey = [key UTF8String];
-        std::string cppValue = [dict[key] UTF8String];
-        vec.push_back(std::make_pair(cppKey, cppValue));
-    }
-    
-    return vec;
-}
-
-NSArray<NSString *> *arrayFromVec(const std::vector<std::string>& vec) {
+NSArray<NSString *> *cppVecOfStringsToArrayOfStrings(const std::vector<std::string>& vec) {
     
     NSMutableArray *array = [NSMutableArray arrayWithCapacity:vec.size()];
     for (auto value : vec) {
@@ -81,7 +71,7 @@ NSArray<NSString *> *arrayFromVec(const std::vector<std::string>& vec) {
     return array;
 }
 
-std::vector<std::string> vecFromArray(NSArray<NSString *> *_Nonnull array) {
+std::vector<std::string> arrayOfStringsToCppVecOfStrings(NSArray<NSString *> *_Nonnull array) {
     std::vector<std::string> vec;
     for (NSString *value in array) {
         vec.push_back([value UTF8String]);
@@ -90,7 +80,7 @@ std::vector<std::string> vecFromArray(NSArray<NSString *> *_Nonnull array) {
 }
 
 NSDictionary<NSString *, NSString *> *_Nonnull
-dictionaryFromMap(const std::map<std::string, std::string>& map) {
+cppMapToDict(const std::map<std::string, std::string>& map) {
     
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithCapacity:map.size()];
     
@@ -104,7 +94,7 @@ dictionaryFromMap(const std::map<std::string, std::string>& map) {
 }
 
 NSArray<PSIPair<NSString *> *> *_Nonnull
-arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
+cppVecOfPairsToArray(const std::vector<std::pair<std::string, std::string>>& vec) {
     NSMutableArray<PSIPair<NSString *> *> *array = [NSMutableArray arrayWithCapacity:vec.size()];
     
     for (auto pair : vec) {
@@ -114,6 +104,27 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     }
     
     return array;
+}
+
+std::map<std::string, std::vector<std::string>>
+dictOfArrayOfStringsToCppMap(NSDictionary<NSString *, NSArray<NSString *> *> *_Nullable dict) {
+    
+    std::map<std::string, std::vector<std::string>> map;
+    
+    for (NSString *key in dict) {
+        std::string cppKey = [key UTF8String];
+        NSArray<NSString *> *_Nonnull values;
+        if (dict[key] == nil) {
+            values = @[];
+        } else {
+            values = dict[key];
+        }
+        std::vector<std::string> cppValues = arrayOfStringsToCppVecOfStrings(values);
+        
+        map[cppKey] = cppValues;
+    }
+    
+    return map;
 }
 
 #pragma mark - HTTPParams
@@ -128,8 +139,8 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
         self->_port = params.port;
         self->_method = [NSString stringWithUTF8String:params.method.c_str()];
         self->_path = [NSString stringWithUTF8String:params.path.c_str()];
-        self->_headers = dictionaryFromMap(params.headers);
-        self->_query = arrayFromVecPair(params.query);
+        self->_headers = cppMapToDict(params.headers);
+        self->_query = cppVecOfPairsToArray(params.query);
         self->_body = [NSString stringWithUTF8String:params.body.c_str()];
     }
     return self;
@@ -176,25 +187,25 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 }
 
 - (instancetype)initWithCode:(int)code
+                     headers:(NSDictionary<NSString *, NSArray<NSString *> *> *)headers
                         body:(NSString *)body
-                        date:(NSString *)date
                        error:(NSString *)error {
     self = [super init];
     if (self) {
         result.code = code;
+        result.headers = dictOfArrayOfStringsToCppMap(headers);
         result.body = [body UTF8String];
-        result.date = [date UTF8String];
         result.error = [error UTF8String];
     }
     return self;
 }
 
 - (instancetype)initWithCriticalError {
-    return [self initWithCode:[PSIHttpResult CRITICAL_ERROR] body:@"" date:@"" error:@""];
+    return [self initWithCode:[PSIHttpResult CRITICAL_ERROR] headers:@{} body:@"" error:@""];
 }
 
 - (instancetype)initWithRecoverableError {
-    return [self initWithCode:[PSIHttpResult RECOVERABLE_ERROR] body:@"" date:@"" error:@""];
+    return [self initWithCode:[PSIHttpResult RECOVERABLE_ERROR] headers:@{} body:@"" error:@""];
 }
 
 - (psicash::HTTPResult)cppHttpResult {
@@ -570,7 +581,7 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 - (PSIError *_Nullable)migrateTokens:(NSDictionary<NSString *, NSString *> *_Nonnull)tokens
                            isAccount:(BOOL)isAccount {
-    std::map<std::string, std::string> _tokens = mapFromNSDictionary(tokens);
+    std::map<std::string, std::string> _tokens = dictToCppMap(tokens);
     psicash::error::Error err = psiCash->MigrateTokens(_tokens, bool2ObjcBOOL(isAccount));
     return [PSIError createFrom:err];
 }
@@ -583,7 +594,7 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 }
 
 - (NSArray<NSString *> *_Nonnull)validTokenTypes {
-    return arrayFromVec(psiCash->ValidTokenTypes());
+    return cppVecOfStringsToArrayOfStrings(psiCash->ValidTokenTypes());
 }
 
 - (BOOL)isAccount {
@@ -623,7 +634,7 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 }
 
 - (NSArray<PSIPurchase *> *)getPurchasesByAuthorizationID:(NSArray<NSString *> *)authorizationIDs {
-    std::vector<std::string> authorization_ids = vecFromArray(authorizationIDs);
+    std::vector<std::string> authorization_ids = arrayOfStringsToCppVecOfStrings(authorizationIDs);
     psicash::Purchases purchases = psiCash->GetPurchasesByAuthorizationID(authorization_ids);
     return [PSIPurchase fromArray:purchases];
 }
@@ -640,7 +651,7 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 - (PSIResult<NSArray<PSIPurchase *> *> *)
 removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
-    std::vector<std::string> transaction_ids = vecFromArray(transactionIds);
+    std::vector<std::string> transaction_ids = arrayOfStringsToCppVecOfStrings(transactionIds);
     psicash::error::Result<psicash::Purchases> result = psiCash->RemovePurchases(transaction_ids);
     return [PSIPurchase fromResult:result];
 }
@@ -673,7 +684,7 @@ removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
 }
 
 - (PSIResult<PSIStatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
-    std::vector<std::string> purchase_classes = vecFromArray(purchaseClasses);
+    std::vector<std::string> purchase_classes = arrayOfStringsToCppVecOfStrings(purchaseClasses);
     psicash::error::Result<psicash::Status> result = psiCash->RefreshState(purchase_classes);
     return [PSIStatusWrapper fromResult:result];
 }
