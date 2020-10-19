@@ -40,6 +40,7 @@ bool ObjcBOOL2bool(BOOL value) {
     if (self) {
         _first = first;
         _second = second;
+        
     }
     return self;
 }
@@ -48,7 +49,8 @@ bool ObjcBOOL2bool(BOOL value) {
 
 #pragma mark - Helper function
 
-std::map<std::string, std::string> mapFromNSDictionary(NSDictionary<NSString *, NSString *> *_Nonnull dict) {
+std::map<std::string, std::string>
+mapFromNSDictionary(NSDictionary<NSString *, NSString *> *_Nullable dict) {
     std::map<std::string, std::string> map;
     
     for (NSString *key in dict) {
@@ -58,18 +60,6 @@ std::map<std::string, std::string> mapFromNSDictionary(NSDictionary<NSString *, 
     }
     
     return map;
-}
-
-std::vector<std::pair<std::string, std::string>> vecFromNSDictionary(NSDictionary<NSString *, NSString *> *_Nonnull dict) {
-    std::vector<std::pair<std::string, std::string>> vec;
-    
-    for (NSString *key in dict) {
-        std::string cppKey = [key UTF8String];
-        std::string cppValue = [dict[key] UTF8String];
-        vec.push_back(std::make_pair(cppKey, cppValue));
-    }
-    
-    return vec;
 }
 
 NSArray<NSString *> *arrayFromVec(const std::vector<std::string>& vec) {
@@ -114,6 +104,27 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
     }
     
     return array;
+}
+
+std::map<std::string, std::vector<std::string>>
+mapFromNSDictionaryArrayValues(NSDictionary<NSString *, NSArray<NSString *> *> *_Nullable dict) {
+    
+    std::map<std::string, std::vector<std::string>> map;
+    
+    for (NSString *key in dict) {
+        std::string cppKey = [key UTF8String];
+        NSArray<NSString *> *_Nonnull values;
+        if (dict[key] == nil) {
+            values = @[];
+        } else {
+            values = dict[key];
+        }
+        std::vector<std::string> cppValues = vecFromArray(values);
+        
+        map[cppKey] = cppValues;
+    }
+    
+    return map;
 }
 
 #pragma mark - HTTPParams
@@ -176,25 +187,25 @@ arrayFromVecPair(const std::vector<std::pair<std::string, std::string>>& vec) {
 }
 
 - (instancetype)initWithCode:(int)code
+                     headers:(NSDictionary<NSString *, NSArray<NSString *> *> *)headers
                         body:(NSString *)body
-                        date:(NSString *)date
                        error:(NSString *)error {
     self = [super init];
     if (self) {
         result.code = code;
+        result.headers = mapFromNSDictionaryArrayValues(headers);
         result.body = [body UTF8String];
-        result.date = [date UTF8String];
         result.error = [error UTF8String];
     }
     return self;
 }
 
 - (instancetype)initWithCriticalError {
-    return [self initWithCode:[PSIHttpResult CRITICAL_ERROR] body:@"" date:@"" error:@""];
+    return [self initWithCode:[PSIHttpResult CRITICAL_ERROR] headers:@{} body:@"" error:@""];
 }
 
 - (instancetype)initWithRecoverableError {
-    return [self initWithCode:[PSIHttpResult RECOVERABLE_ERROR] body:@"" date:@"" error:@""];
+    return [self initWithCode:[PSIHttpResult RECOVERABLE_ERROR] headers:@{} body:@"" error:@""];
 }
 
 - (psicash::HTTPResult)cppHttpResult {

@@ -45,6 +45,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     NSURL *tempDir;
 }
 
+
 /**
  Creates temporary directory with path `<NSTemporaryDirectory()>/PsiCashLibTests`.
  If that directory already exists, deletes the directory and all of its contents.
@@ -102,7 +103,7 @@ typedef NS_ENUM(NSInteger, TestError) {
         
         if (self.httpRequestsDryRun == TRUE) {
             return [[PSIHttpResult alloc] initWithCode:[PSIHttpResult CRITICAL_ERROR]
-                                               body:@"" date:@"" error:@"dry-run"];
+                                               headers:@{} body:@"" error:@"dry-run"];
         }
         
         NSMutableURLRequest *request =
@@ -120,26 +121,27 @@ typedef NS_ENUM(NSInteger, TestError) {
             
             if (error != nil) {
                 result = [[PSIHttpResult alloc] initWithCode:PSIHttpResult.RECOVERABLE_ERROR
-                                                   body:@""
-                                                   date:@""
-                                                  error:[error description]];
+                                                     headers: @{}
+                                                        body:@""
+                                                       error:[error description]];
             } else {
                 NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-                NSString *dateHeader = nil;
                 
-                if (@available(iOS 13.0, *)) {
-                    dateHeader = [httpResponse valueForHTTPHeaderField:@"Date"];
-                } else {
-                    // Fallback on earlier versions
-                    dateHeader = [httpResponse allHeaderFields][@"Date"];
+                NSMutableDictionary<NSString *, NSArray<NSString *> *> *headers = [NSMutableDictionary dictionary];
+                
+                NSDictionary *allHeaders = [httpResponse allHeaderFields];
+
+                for (NSString *key in allHeaders) {
+                    NSString *value = (NSString *)allHeaders[key];
+                    headers[key] = @[value];
                 }
                 
                 NSString *body = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
              
                 result = [[PSIHttpResult alloc] initWithCode:(int)httpResponse.statusCode
-                                                       body:body
-                                                       date:dateHeader
-                                                      error:@""];
+                                                     headers: headers
+                                                        body:body
+                                                       error:@""];
             }
             
             dispatch_semaphore_signal(self->sema);
@@ -410,8 +412,9 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result != nil);
     XCTAssert(result.failure == nil);
     
-    // Base-64 version of string "{"debug":1,"dev":1,"metadata":{"user_agent":"Psiphon-PsiCash-iOS","v":1},"tokens":null,"v":1}"
-    XCTAssert([result.success isEqualToString:@"https://example.com/#!psicash=eyJkZWJ1ZyI6MSwiZGV2IjoxLCJtZXRhZGF0YSI6eyJ1c2VyX2FnZW50IjoiUHNpcGhvbi1Qc2lDYXNoLWlPUyIsInYiOjF9LCJ0b2tlbnMiOm51bGwsInYiOjF9"]);
+    // Base-64 version of string {"debug":1,"dev":1,"metadata":{"user_agent":"Psiphon-PsiCash-iOS","v":1},"tokens":null,"tokens_timestamp":null,"v":1}
+    
+    XCTAssert([result.success isEqualToString:@"https://example.com/#!psicash=eyJkZWJ1ZyI6MSwiZGV2IjoxLCJtZXRhZGF0YSI6eyJ1c2VyX2FnZW50IjoiUHNpcGhvbi1Qc2lDYXNoLWlPUyIsInYiOjF9LCJ0b2tlbnMiOm51bGwsInRva2Vuc190aW1lc3RhbXAiOm51bGwsInYiOjF9"]);
 }
 
 - (void)testGetBuyPsiURLWithoutRefresh {
