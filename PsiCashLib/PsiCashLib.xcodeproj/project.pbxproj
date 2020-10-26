@@ -13,27 +13,22 @@
 		8D21FDE024E46B7F00343D32 /* PsiCashLibWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FDDE24E46B7F00343D32 /* PsiCashLibWrapper.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		8D21FDE124E46B7F00343D32 /* PsiCashLibWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FDDF24E46B7F00343D32 /* PsiCashLibWrapper.mm */; };
 		8D21FE5524E46CF200343D32 /* datetime.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE2F24E46CF100343D32 /* datetime.hpp */; };
-		8D21FE5924E46CF200343D32 /* vendor in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE3324E46CF100343D32 /* vendor */; };
 		8D21FE5A24E46CF200343D32 /* LICENSE-3RD-PARTY in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE3424E46CF100343D32 /* LICENSE-3RD-PARTY */; };
 		8D21FE5B24E46CF200343D32 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE3524E46CF100343D32 /* README.md */; };
 		8D21FE5C24E46CF200343D32 /* url.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE3624E46CF100343D32 /* url.cpp */; };
 		8D21FE5E24E46CF200343D32 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE3824E46CF100343D32 /* utils.cpp */; };
 		8D21FE5F24E46CF200343D32 /* datastore.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE3924E46CF100343D32 /* datastore.hpp */; };
 		8D21FE6124E46CF200343D32 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE3B24E46CF100343D32 /* LICENSE */; };
-		8D21FE6224E46CF200343D32 /* build-windows.bat in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE3C24E46CF100343D32 /* build-windows.bat */; };
 		8D21FE6524E46CF200343D32 /* datetime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE3F24E46CF100343D32 /* datetime.cpp */; };
 		8D21FE6624E46CF200343D32 /* base64.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE4024E46CF100343D32 /* base64.hpp */; };
 		8D21FE6924E46CF200343D32 /* url.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE4324E46CF100343D32 /* url.hpp */; };
 		8D21FE6A24E46CF200343D32 /* error.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE4424E46CF100343D32 /* error.hpp */; };
-		8D21FE6C24E46CF200343D32 /* gcov.sh in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE4624E46CF100343D32 /* gcov.sh */; };
 		8D21FE6F24E46CF200343D32 /* http_status_codes.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE4924E46CF100343D32 /* http_status_codes.h */; };
-		8D21FE7024E46CF200343D32 /* CMakeLists.txt.in in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE4A24E46CF100343D32 /* CMakeLists.txt.in */; };
 		8D21FE7124E46CF200343D32 /* userdata.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE4B24E46CF100343D32 /* userdata.cpp */; };
 		8D21FE7224E46CF200343D32 /* userdata.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE4C24E46CF100343D32 /* userdata.hpp */; };
 		8D21FE7324E46CF200343D32 /* psicash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE4D24E46CF100343D32 /* psicash.cpp */; };
 		8D21FE7424E46CF200343D32 /* psicash.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE4E24E46CF100343D32 /* psicash.hpp */; };
 		8D21FE7524E46CF200343D32 /* datastore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE4F24E46CF100343D32 /* datastore.cpp */; };
-		8D21FE7624E46CF200343D32 /* CMakeLists.txt in Resources */ = {isa = PBXBuildFile; fileRef = 8D21FE5024E46CF200343D32 /* CMakeLists.txt */; };
 		8D21FE7824E46CF200343D32 /* error.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE5224E46CF200343D32 /* error.cpp */; };
 		8D21FE7924E46CF200343D32 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D21FE5324E46CF200343D32 /* base64.cpp */; };
 		8D21FE7A24E46CF200343D32 /* utils.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 8D21FE5424E46CF200343D32 /* utils.hpp */; };
@@ -320,13 +315,8 @@
 			files = (
 				8D21FE8724ECCBB800343D32 /* build-git-commit.txt in Resources */,
 				8D21FE5B24E46CF200343D32 /* README.md in Resources */,
-				8D21FE5924E46CF200343D32 /* vendor in Resources */,
-				8D21FE6224E46CF200343D32 /* build-windows.bat in Resources */,
-				8D21FE7024E46CF200343D32 /* CMakeLists.txt.in in Resources */,
-				8D21FE6C24E46CF200343D32 /* gcov.sh in Resources */,
 				8D21FE6124E46CF200343D32 /* LICENSE in Resources */,
 				8D21FE5A24E46CF200343D32 /* LICENSE-3RD-PARTY in Resources */,
-				8D21FE7624E46CF200343D32 /* CMakeLists.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
