@@ -503,26 +503,6 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 @end
 
-#pragma mark - Token types
-
-@implementation PSITokenType
-
-+ (NSString *)earnerTokenType {
-    return [NSString stringWithUTF8String:psicash::kEarnerTokenType];
-}
-
-+ (NSString *)spenderTokenType {
-    return [NSString stringWithUTF8String:psicash::kSpenderTokenType];
-}
-
-+ (NSString *)indicatorTokenType {
-    return [NSString stringWithUTF8String:psicash::kIndicatorTokenType];
-}
-+ (NSString *)accountTokenType {
-    return [NSString stringWithUTF8String:psicash::kAccountTokenType];
-}
-
-@end
 
 #pragma mark - PsiCashLibWrapper
 
@@ -593,8 +573,8 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
     return [PSIError createFrom:err];
 }
 
-- (NSArray<NSString *> *_Nonnull)validTokenTypes {
-    return cppVecOfStringsToArrayOfStrings(psiCash->ValidTokenTypes());
+- (BOOL)hasTokens {
+    return bool2ObjcBOOL(psiCash->HasTokens());
 }
 
 - (BOOL)isAccount {

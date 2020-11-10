@@ -189,7 +189,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result.failure == nil);
     XCTAssert(result.success != nil);
     XCTAssert(result.success.status == PSIStatusSuccess);
-    XCTAssert([lib validTokenTypes].count > 0);
+    XCTAssert([lib hasTokens] == TRUE);
 }
 
 - (void)rewardInTrillions:(int)trillions {
@@ -222,7 +222,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(err == nil);
     XCTAssert(contents.count == 1);
     XCTAssertTrue([contents isEqualToArray:@[@"psicashdatastore.dev"]]);
-    XCTAssert([lib validTokenTypes].count == 3);
+    XCTAssert([lib hasTokens] == TRUE);
     
     // Act
     lib = nil;
@@ -236,27 +236,29 @@ typedef NS_ENUM(NSInteger, TestError) {
     // Assert
     XCTAssert(initErr == nil);
     XCTAssert([lib initialized] == TRUE);
-    XCTAssert([lib validTokenTypes].count == 0); // Indicates that the datastore has been
+    XCTAssert([lib hasTokens] == FALSE); // Indicates that the datastore has been
                                                  // reset and there are no tokens.
 }
 
 - (void)testMigrateToken {
     // Arrange
     NSDictionary<NSString *, NSString *> *tokens = @{
-        PSITokenType.earnerTokenType:
+        @"earner":
             @"d31b70ac051a28a2f758e5ec12fa5cbdf7a13bf9a00beb293fdec5bc249b36f9",
-        PSITokenType.indicatorTokenType:
+        @"indicator":
             @"9330841355ebb06457a42eebcf4ae99caca402bc9e0edb531ad24576ee4b8b2c",
-        PSITokenType.spenderTokenType:
+        @"spender":
             @"ffb3588957b3581705da824826038a6c578d79cbca1c6debd44657a1d0392562"
     };
-    XCTAssert([lib validTokenTypes].count == 0);
+    XCTAssert([lib hasTokens] == FALSE);
+    XCTAssert([lib isAccount] == FALSE);
     
     // Act
-    [lib migrateTokens:tokens isAccount:TRUE];
+    [lib migrateTokens:tokens isAccount:FALSE];
     
     // Assert
-    XCTAssert([lib validTokenTypes].count == 3);
+    XCTAssert([lib hasTokens] == TRUE);
+    XCTAssert([lib isAccount] == FALSE);
 }
 
 - (void)testSetRequestMetadataItem {
@@ -276,41 +278,19 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssertTrue([lastHttpRequest.headers[@"X-PsiCash-Metadata"] isEqualToString:@"{\"attempt\":1,\"metadata_key_1\":\"metadata_value_1\",\"metadata_key_2\":\"metadata_value_2\",\"user_agent\":\"Psiphon-PsiCash-iOS\",\"v\":1}"]);
 }
 
-- (void)testValidTokenTypesBeforeRefresh {
-    // Act
-    NSArray<NSString *> *validTokenTypes = [lib validTokenTypes];
-    
+- (void)testHasTokensAndIsAccountBeforeRefresh {
     // Assert
-    XCTAssert(validTokenTypes != nil);
-    XCTAssert(validTokenTypes.count == 0);
+    XCTAssert([lib hasTokens] == FALSE);
+    XCTAssert([lib isAccount] == FALSE);
 }
 
-- (void)testValidTokenTypes {
+- (void)testHasTokensAndIsAccountAfterRefresh {
     // Act
     [self refreshState:@[]];
-    NSArray<NSString *> *validTokenTypes = [lib validTokenTypes];
-    
-    // Assert
-    XCTAssert(validTokenTypes != nil);
-    XCTAssert([validTokenTypes containsObject:PSITokenType.earnerTokenType]);
-    XCTAssert([validTokenTypes containsObject:PSITokenType.spenderTokenType]);
-    XCTAssert([validTokenTypes containsObject:PSITokenType.indicatorTokenType]);
-}
 
-- (void)testIsAccount {
-    // Arrange
-    [self refreshState:@[]];
-    NSArray<NSString *> *validTokenTypes = [lib validTokenTypes];
-
-    // Act
-    BOOL isAccount = [lib isAccount];
-    
     // Assert
-    if ([validTokenTypes containsObject: PSITokenType.accountTokenType]) {
-        XCTAssert(isAccount == TRUE);
-    } else {
-        XCTAssert(isAccount == FALSE);
-    }
+    XCTAssert([lib hasTokens] == TRUE);
+    XCTAssert([lib isAccount] == FALSE);
 }
 
 - (void)testBalanceUnrefreshed {
@@ -485,7 +465,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     // Arrange
     XCTAssert(lib.balance == 0);
     [self refreshState:@[SpeedBoostPurchaseClass]];
-    XCTAssert(lib.validTokenTypes.count >= 3);
+    XCTAssert([lib hasTokens] == TRUE);
     [self rewardInTrillions:3];
     
     // Get products.
@@ -584,8 +564,8 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testLoginWithoutTracker {
     // Act, Assert
     [self helperLogin];
+    XCTAssert([lib hasTokens] == TRUE);
     XCTAssert([lib isAccount] == TRUE);
-    XCTAssert([lib validTokenTypes].count > 0);
 }
 
 - (void)testLoginWithTracker {
@@ -597,8 +577,8 @@ typedef NS_ENUM(NSInteger, TestError) {
     [self helperLogin];
     
     // Assert
+    XCTAssert([lib hasTokens] == TRUE);
     XCTAssert([lib isAccount] == TRUE);
-    XCTAssert([lib validTokenTypes].count >= 3);
 }
 
 - (void)testAccountLogout {
@@ -609,8 +589,8 @@ typedef NS_ENUM(NSInteger, TestError) {
     [lib accountLogout];
 
     // Assert
+    XCTAssert([lib hasTokens] == FALSE);
     XCTAssert([lib isAccount] == TRUE);
-    XCTAssert([lib validTokenTypes].count < 3);
 }
 
 - (void)testResetUserWithTrackerOnly {
@@ -621,7 +601,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     [lib resetUser];
     
     // Assert
-    XCTAssert([lib validTokenTypes].count == 0);
+    XCTAssert([lib hasTokens] == FALSE);
 }
 
 - (void)testResetUserWithAccount {
@@ -635,7 +615,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     
     // Assert
     XCTAssert([lib isAccount] == FALSE);
-    XCTAssert([lib validTokenTypes].count == 0);
+    XCTAssert([lib hasTokens] == FALSE);
 }
 
 @end
