@@ -254,7 +254,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert([lib isAccount] == FALSE);
     
     // Act
-    [lib migrateTokens:tokens isAccount:FALSE];
+    [lib migrateTrackerTokens:tokens];
     
     // Assert
     XCTAssert([lib hasTokens] == TRUE);
@@ -418,6 +418,24 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert([result.success containsString:@"https://buy.psi.cash/#!psicash="]);
 }
 
+- (void)testGetAccountSignupURL {
+    // Act
+    NSString *url = [lib getAccountSignupURL];
+
+    // Assert
+    XCTAssert(url != nil);
+    XCTAssert([url length] > 0);
+}
+
+- (void)testGetAccountManagementURL {
+    // Act
+    NSString *url = [lib getAccountManagementURL];
+
+    // Assert
+    XCTAssert(url != nil);
+    XCTAssert([url length] > 0);
+}
+
 - (void)testGetRewardedActivityDataWithNoReward {
     // Act
     [self refreshState:@[]];
@@ -546,7 +564,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 #pragma mark - Account login tests
 
-- (void)helperLogin {
+- (void)helperLoginWithExpectedLastTrackerMergeValue:(NSNumber *_Nullable)expected {
     // Act
     PSIResult<PSIAccountLoginResponse *> *result =
     [lib accountLoginWithUsername:@TEST_ACCOUNT_ONE_USERNAME
@@ -557,24 +575,31 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result.failure == nil);
     XCTAssert(result.success != nil);
     XCTAssert(result.success.status == PSIStatusSuccess);
-    XCTAssert(result.success.lastTrackerMerge == nil);
+
+    if (expected != nil) {
+        XCTAssert(result.success.lastTrackerMerge != nil);
+        XCTAssert([result.success.lastTrackerMerge boolValue] == [expected boolValue]);
+    } else {
+        XCTAssertNil(result.success.lastTrackerMerge);
+    }
 }
 
-// Tests logging in with a tracker already in place.
+// Tests logging in without a tracker already in place (no state refresh).
 - (void)testLoginWithoutTracker {
     // Act, Assert
-    [self helperLogin];
+    [self helperLoginWithExpectedLastTrackerMergeValue:nil];
     XCTAssert([lib hasTokens] == TRUE);
     XCTAssert([lib isAccount] == TRUE);
 }
 
+// Tests logging in with a tracker already in place.
 - (void)testLoginWithTracker {
     // Arrange
     [self refreshState:@[SpeedBoostPurchaseClass]]; // get tracker tokens
     XCTAssert([lib isAccount] == FALSE);
     
     // Act
-    [self helperLogin];
+    [self helperLoginWithExpectedLastTrackerMergeValue:@(FALSE)];
     
     // Assert
     XCTAssert([lib hasTokens] == TRUE);
@@ -583,7 +608,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testAccountLogout {
     // Arrange
-    [self helperLogin];
+    [self helperLoginWithExpectedLastTrackerMergeValue:nil];
     
     // Act
     [lib accountLogout];
@@ -606,7 +631,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testResetUserWithAccount {
     // Arrange
-    [self helperLogin];
+    [self helperLoginWithExpectedLastTrackerMergeValue:nil];
     
     XCTAssert([lib isAccount] == TRUE);
     

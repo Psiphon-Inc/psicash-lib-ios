@@ -203,8 +203,7 @@ typedef NS_ENUM(NSInteger, PSIStatus) {
 /// Forces the given tokens and account status to be set in the datastore. Must be
 /// called after Init(). RefreshState() must be called after method (and shouldn't be
 /// be called before this method, although behaviour will be okay).
-- (PSIError *_Nullable)migrateTokens:(NSDictionary<NSString *, NSString *> *)tokens
-                           isAccount:(BOOL)isAccount;
+- (PSIError *_Nullable)migrateTrackerTokens:(NSDictionary<NSString *, NSString *> *)tokens;
 
 /// Set values that will be included in the request metadata. This includes
 /// client_version, client_region, sponsor_id, and propagation_channel_id.
@@ -266,6 +265,12 @@ typedef NS_ENUM(NSInteger, PSIStatus) {
 /// Utilizes stored tokens and metadata (and a configured base URL) to craft a URL
 /// where the user can buy PsiCash for real money.
 - (PSIResult<NSString *> *)getBuyPsiURL;
+
+/// Returns the URL that should be used for signing up a new account.
+- (NSString *)getAccountSignupURL;
+
+/// Returns the URL that should be used for managing and existing account.
+- (NSString *)getAccountManagementURL;
 
 /// Creates a data package that should be included with a webhook for a user
 /// action that should be rewarded (such as watching a rewarded video).

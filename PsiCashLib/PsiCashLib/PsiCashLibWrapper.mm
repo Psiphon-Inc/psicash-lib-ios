@@ -559,10 +559,9 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
     return [PSIError createFrom:error];
 }
 
-- (PSIError *_Nullable)migrateTokens:(NSDictionary<NSString *, NSString *> *_Nonnull)tokens
-                           isAccount:(BOOL)isAccount {
+- (PSIError *_Nullable)migrateTrackerTokens:(NSDictionary<NSString *, NSString *> *_Nonnull)tokens {
     std::map<std::string, std::string> _tokens = dictToCppMap(tokens);
-    psicash::error::Error err = psiCash->MigrateTokens(_tokens, bool2ObjcBOOL(isAccount));
+    psicash::error::Error err = psiCash->MigrateTrackerTokens(_tokens);
     return [PSIError createFrom:err];
 }
 
@@ -644,6 +643,16 @@ removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
 - (PSIResult<NSString *> *)getBuyPsiURL {
     psicash::error::Result<std::string> result = psiCash->GetBuyPsiURL();
     return [PSIResult fromStringResult:result];
+}
+
+- (NSString *)getAccountSignupURL {
+    std::string url = psiCash->GetAccountSignupURL();
+    return [NSString stringWithUTF8String:url.c_str()];
+}
+
+- (NSString *)getAccountManagementURL {
+    std::string url = psiCash->GetAccountManagementURL();
+    return [NSString stringWithUTF8String:url.c_str()];
 }
 
 - (PSIResult<NSString *> *)getRewardedActivityData {
