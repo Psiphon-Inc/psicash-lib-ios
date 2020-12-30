@@ -10,38 +10,74 @@ cd ${BASE_DIR}
 # The location of the final framework build
 BUILD_DIR="${BASE_DIR}/build"
 
+# Clean previous build.
+rm -rf "${BUILD_DIR}"
+
 VALID_IOS_ARCHS="arm64 armv7 armv7s"
 VALID_SIMULATOR_ARCHS="x86_64"
 
 FRAMEWORK_XCODE_PROJECT=${BASE_DIR}/PsiCashLib/PsiCashLib.xcodeproj/
 
-# Clean previous output
-rm -rf "${BUILD_DIR}"
-rm -rf "${BUILD_DIR}-SIMULATOR"
+# Build the framework for iOS,
+xcodebuild clean archive \
+-project "${FRAMEWORK_XCODE_PROJECT}" \
+-scheme "PsiCashLib" \
+-configuration "Release" \
+-sdk iphoneos \
+-archivePath "${BUILD_DIR}/ios.xcarchive" \
+CODE_SIGN_IDENTITY="" \
+CODE_SIGNING_REQUIRED="NO" \
+CODE_SIGN_ENTITLEMENTS="" \
+CODE_SIGNING_ALLOWED="NO" \
+ONLY_ACTIVE_ARCH="NO" \
+BUILD_LIBRARIES_FOR_DISTRIBUTION="YES" \
+SKIP_INSTALL="NO"
 
-# Build the framework for phones...
-xcodebuild clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" -configuration Release -sdk iphoneos ONLY_ACTIVE_ARCH=NO -project ${FRAMEWORK_XCODE_PROJECT} CONFIGURATION_BUILD_DIR="${BUILD_DIR}"
-rc=$?; if [[ $rc != 0 ]]; then
-  echo "FAILURE: xcodebuild iphoneos"
-  exit $rc
-fi
+# build the framework for iOS Simulator,
+xcodebuild clean archive \
+-project "${FRAMEWORK_XCODE_PROJECT}" \
+-scheme "PsiCashLib" \
+-configuration "Release" \
+-sdk iphonesimulator \
+-archivePath "${BUILD_DIR}/ios-simulator.xcarchive" \
+CODE_SIGN_IDENTITY="" \
+CODE_SIGNING_REQUIRED="NO" \
+CODE_SIGN_ENTITLEMENTS="" \
+CODE_SIGNING_ALLOWED="NO" \
+ONLY_ACTIVE_ARCH="NO" \
+BUILD_LIBRARIES_FOR_DISTRIBUTION="YES" \
+SKIP_INSTALL="NO"
 
-# ...and for the simulator.
-xcodebuild clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" -configuration Release -sdk iphonesimulator ARCHS=x86_64 VALID_ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO -project ${FRAMEWORK_XCODE_PROJECT} CONFIGURATION_BUILD_DIR="${BUILD_DIR}-SIMULATOR"
-rc=$?; if [[ $rc != 0 ]]; then
-  echo "FAILURE: xcodebuild iphonesimulator"
-  exit $rc
-fi
+# # and build the framework for MacCatalyst.
+# xcodebuild clean archive \
+# -project "${FRAMEWORK_XCODE_PROJECT}" \
+# -scheme "PsiCashLib" \
+# -configuration "Release" \
+# -archivePath "${BUILD_DIR}/catalyst.xcarchive" \
+# -destination 'platform=macOS,arch=x86_64,variant=Mac Catalyst' \
+# SUPPORTS_MACCATALYST="YES" \
+# CODE_SIGN_IDENTITY="" \
+# CODE_SIGNING_REQUIRED="NO" \
+# CODE_SIGN_ENTITLEMENTS="" \
+# CODE_SIGNING_ALLOWED="NO" \
+# ONLY_ACTIVE_ARCH="NO" \
+# BUILD_LIBRARIES_FOR_DISTRIBUTION="YES" \
+# SKIP_INSTALL="NO"
 
-# Add the simulator x86_64 binary into the main framework binary.
-lipo -create "${BUILD_DIR}/PsiCashLib.framework/PsiCashLib" "${BUILD_DIR}-SIMULATOR/PsiCashLib.framework/PsiCashLib" -output "${BUILD_DIR}/PsiCashLib.framework/PsiCashLib"
-rc=$?; if [[ $rc != 0 ]]; then
-  echo "FAILURE: lipo create"
-  exit $rc
-fi
+# Creates a single xcframework from both frameworks and their dSYMs.
+xcodebuild -create-xcframework \
+-framework "${BUILD_DIR}/ios.xcarchive/Products/Library/Frameworks/PsiCashLib.framework" \
+-debug-symbols "${BUILD_DIR}/ios.xcarchive/dSYMs/PsiCashLib.framework.dSYM" \
+-framework "${BUILD_DIR}/ios-simulator.xcarchive/Products/Library/Frameworks/PsiCashLib.framework" \
+-debug-symbols "${BUILD_DIR}/ios-simulator.xcarchive/dSYMs/PsiCashLib.framework.dSYM" \
+-output "${BUILD_DIR}/PsiCashLib.xcframework"
+# -framework "${BUILD_DIR}/catalyst.xcarchive/Products/Library/Frameworks/PsiCashLib.framework" \
+# -debug-symbols "${BUILD_DIR}/catalyst.xcarchive/dSYMs/PsiCashLib.framework.dSYM" \
 
-# Delete the temporary simulator build files.
-rm -rf "${BUILD_DIR}-SIMULATOR"
+# Removes frameworks used to build the xcframework
+rm -rf "${BUILD_DIR}/ios.xcarchive"
+rm -rf "${BUILD_DIR}/ios-simulator.xcarchive"
+
 
 # Jenkins loses symlinks from the framework directory, which results in a build
 # artifact that is invalid to use in an App Store app. Instead, we will zip the
