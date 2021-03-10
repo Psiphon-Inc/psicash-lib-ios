@@ -182,7 +182,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 // Refreshes PsiCash state.
 - (void)refreshState:(NSArray<NSString *> *_Nonnull)purchaseClasses {
     // Act
-    PSIResult<PSIStatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses];
+    PSIResult<PSIRefreshStateResponse *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses];
     
     // Assert
     XCTAssert(result != nil);
@@ -268,7 +268,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     self.httpRequestsDryRun = TRUE;
     
     // Act
-    PSIResult<PSIStatusWrapper *> *result = [lib refreshStateWithPurchaseClasses:@[]];
+    PSIResult<PSIRefreshStateResponse *> *result = [lib refreshStateWithPurchaseClasses:@[]];
     
     // Assert
     XCTAssert(err1 == nil);
@@ -392,9 +392,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result != nil);
     XCTAssert(result.failure == nil);
     
-    // Base-64 version of string {"debug":1,"dev":1,"metadata":{"user_agent":"Psiphon-PsiCash-iOS","v":1},"tokens":null,"tokens_timestamp":null,"v":1}
-    
-    XCTAssert([result.success isEqualToString:@"https://example.com/#!psicash=eyJkZWJ1ZyI6MSwiZGV2IjoxLCJtZXRhZGF0YSI6eyJ1c2VyX2FnZW50IjoiUHNpcGhvbi1Qc2lDYXNoLWlPUyIsInYiOjF9LCJ0b2tlbnMiOm51bGwsInRva2Vuc190aW1lc3RhbXAiOm51bGwsInYiOjF9"]);
+    XCTAssert([result.success hasPrefix:@"https://example.com/?psicash="]);
 }
 
 - (void)testGetBuyPsiURLWithoutRefresh {
@@ -508,7 +506,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(purchases.count == 1);
     XCTAssert(purchases[0].transactionID.length > 0);
     XCTAssert([purchases[0].transactionClass isEqualToString:SpeedBoostPurchaseClass]);
-    XCTAssert([purchases[0].distinguisher isEqualToString:@"1hr"]);
+    XCTAssert([purchases[0].distinguisher isEqualToString:@"1min"]);
     XCTAssert(purchases[0].iso8601ServerTimeExpiry.length > 0);
     XCTAssert(purchases[0].iso8601LocalTimeExpiry.length > 0);
     XCTAssert(purchases[0].authorization.ID.length > 0);

@@ -472,6 +472,57 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::NewExpiringPurchaseRe
 
 @end
 
+#pragma mark - RefreshStateResponse
+
+@implementation PSIRefreshStateResponse
+
+- (instancetype)initWith:(const psicash::PsiCash::RefreshStateResponse&)value {
+    self = [super init];
+    if (self) {
+        _status = statusFromStatus(value.status);
+        _reconnectRequired = bool2ObjcBOOL(value.reconnect_required);
+    }
+    return self;
+}
+
++ (PSIResult<PSIRefreshStateResponse *> *_Nonnull)
+fromResult:(const psicash::error::Result<psicash::PsiCash::RefreshStateResponse>&)result {
+    
+    if (result.has_value()) {
+        return [PSIResult success:[[PSIRefreshStateResponse alloc] initWith:result.value()]];
+    } else {
+        return [PSIResult failure:[PSIError createOrThrow:result.error()]];
+    }
+    
+}
+
+@end
+
+#pragma mark - AccountLogoutResponse
+
+@implementation PSIAccountLogoutResponse
+
+- (instancetype)initWith:(const psicash::PsiCash::AccountLogoutResponse&)value {
+    self = [super init];
+    if (self) {
+        _reconnectRequired = bool2ObjcBOOL(value.reconnect_required);
+    }
+    return self;
+}
+
++ (PSIResult<PSIAccountLogoutResponse *> *_Nonnull)
+fromResult:(const psicash::error::Result<psicash::PsiCash::AccountLogoutResponse>&)result {
+    
+    if (result.has_value()) {
+        return [PSIResult success:[[PSIAccountLogoutResponse alloc] initWith:result.value()]];
+    } else {
+        return [PSIResult failure:[PSIError createOrThrow:result.error()]];
+    }
+    
+}
+
+@end
+
 #pragma mark - AccountLoginResponse
 
 @implementation PSIAccountLoginResponse
@@ -672,10 +723,10 @@ removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
     }
 }
 
-- (PSIResult<PSIStatusWrapper *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
+- (PSIResult<PSIRefreshStateResponse *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
     std::vector<std::string> purchase_classes = arrayOfStringsToCppVecOfStrings(purchaseClasses);
-    psicash::error::Result<psicash::Status> result = psiCash->RefreshState(purchase_classes);
-    return [PSIStatusWrapper fromResult:result];
+    psicash::error::Result<psicash::PsiCash::RefreshStateResponse> result = psiCash->RefreshState(purchase_classes);
+    return [PSIRefreshStateResponse fromResult:result];
 }
 
 - (PSIResult<PSINewExpiringPurchaseResponse *> *)
@@ -689,9 +740,9 @@ expectedPrice:(int64_t)expectedPrice {
     return [PSINewExpiringPurchaseResponse fromResult:result];
 }
 
-- (PSIError *_Nullable)accountLogout {
-    psicash::error::Error error = psiCash->AccountLogout();
-    return [PSIError createFrom:error];
+- (PSIResult<PSIAccountLogoutResponse *> *)accountLogout {
+    psicash::error::Result<psicash::PsiCash::AccountLogoutResponse> result = psiCash->AccountLogout();
+    return [PSIAccountLogoutResponse fromResult:result];
 }
 
 - (PSIResult<PSIAccountLoginResponse *> *)accountLoginWithUsername:(NSString *)username
