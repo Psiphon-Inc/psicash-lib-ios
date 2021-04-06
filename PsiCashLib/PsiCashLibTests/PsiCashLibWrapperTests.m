@@ -180,9 +180,10 @@ typedef NS_ENUM(NSInteger, TestError) {
 #pragma mark - Helper functions
 
 // Refreshes PsiCash state.
-- (void)refreshState:(NSArray<NSString *> *_Nonnull)purchaseClasses {
+- (void)refreshState:(NSArray<NSString *> *_Nonnull)purchaseClasses localOnly:(BOOL)localOnly {
     // Act
-    PSIResult<PSIRefreshStateResponse *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses];
+    PSIResult<PSIRefreshStateResponse *> *result = [lib refreshStateWithPurchaseClasses:purchaseClasses
+                                                                              localOnly:localOnly];
     
     // Assert
     XCTAssert(result != nil);
@@ -213,7 +214,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testForceReset {
     // Arrange
-    [self refreshState:@[SpeedBoostPurchaseClass]];
+    [self refreshState:@[SpeedBoostPurchaseClass] localOnly:FALSE];
     NSError *err;
     NSArray<NSString *> *contents = [NSFileManager.defaultManager
                                      contentsOfDirectoryAtPath:tempDir.path
@@ -268,7 +269,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     self.httpRequestsDryRun = TRUE;
     
     // Act
-    PSIResult<PSIRefreshStateResponse *> *result = [lib refreshStateWithPurchaseClasses:@[]];
+    PSIResult<PSIRefreshStateResponse *> *result = [lib refreshStateWithPurchaseClasses:@[] localOnly:FALSE];
     
     // Assert
     XCTAssert(err1 == nil);
@@ -276,6 +277,16 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(result.success == nil);
     XCTAssert(result.failure != nil);
     XCTAssertTrue([lastHttpRequest.headers[@"X-PsiCash-Metadata"] isEqualToString:@"{\"attempt\":1,\"metadata_key_1\":\"metadata_value_1\",\"metadata_key_2\":\"metadata_value_2\",\"user_agent\":\"Psiphon-PsiCash-iOS\",\"v\":1}"]);
+}
+
+- (void)testSetLocale {
+    
+    // Act
+    PSIError *err = [lib setLocale:@"zh-Hant_CA"];
+    
+    // Assert
+    XCTAssert(err == nil);
+    
 }
 
 - (void)testHasTokensAndIsAccountBeforeRefresh {
@@ -286,7 +297,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testHasTokensAndIsAccountAfterRefresh {
     // Act
-    [self refreshState:@[]];
+    [self refreshState:@[] localOnly:FALSE];
 
     // Assert
     XCTAssert([lib hasTokens] == TRUE);
@@ -299,7 +310,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testBalanceFirstRefresh {
     // Act
-    [self refreshState:@[]];
+    [self refreshState:@[] localOnly:FALSE];
     
     // Assert
     XCTAssert(lib.balance == 90000000000);
@@ -308,7 +319,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testBalanceAfterReward {
     // Arrange
     XCTAssert(lib.balance == 0);
-    [self refreshState:@[]];
+    [self refreshState:@[] localOnly:FALSE];
     
     // Act
     PSIError *err = [lib testRewardWithClass:@TEST_CREDIT_TRANSACTION_CLASS
@@ -321,7 +332,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testGetPurchasePrices {
     // Act
-    [self refreshState:@[SpeedBoostPurchaseClass]];
+    [self refreshState:@[SpeedBoostPurchaseClass] localOnly:FALSE];
     NSArray<PSIPurchasePrice *> *array = [lib getPurchasePrices];
     
     // Assert
@@ -407,36 +418,32 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testGetBuyPsiURLWithRefresh {
     // Act
-    [self refreshState:@[]];
+    [self refreshState:@[] localOnly:FALSE];
     PSIResult<NSString *> *result = [lib getBuyPsiURL];
     
     // Assert
     XCTAssert(result != nil);
     XCTAssert(result.failure == nil);
-    XCTAssert([result.success containsString:@"https://buy.psi.cash/#!psicash="]);
 }
 
-- (void)testGetAccountSignupURL {
+- (void)testGetUserSiteURL {
     // Act
-    NSString *url = [lib getAccountSignupURL];
+    NSString *url1 = [lib getUserSiteURL:PSIUserSiteURLTypeAccountSignup webview:TRUE];
+    NSString *url2 = [lib getUserSiteURL:PSIUserSiteURLTypeAccountManagement webview:TRUE];
+    NSString *url3 = [lib getUserSiteURL:PSIUserSiteURLTypeForgotAccount webview:TRUE];
 
     // Assert
-    XCTAssert(url != nil);
-    XCTAssert([url length] > 0);
-}
-
-- (void)testGetAccountManagementURL {
-    // Act
-    NSString *url = [lib getAccountManagementURL];
-
-    // Assert
-    XCTAssert(url != nil);
-    XCTAssert([url length] > 0);
+    XCTAssert(url1 != nil);
+    XCTAssert([url1 length] > 0);
+    XCTAssert(url2 != nil);
+    XCTAssert([url2 length] > 0);
+    XCTAssert(url3 != nil);
+    XCTAssert([url3 length] > 0);
 }
 
 - (void)testGetRewardedActivityDataWithNoReward {
     // Act
-    [self refreshState:@[]];
+    [self refreshState:@[] localOnly:FALSE];
     PSIResult<NSString *> *result = [lib getRewardedActivityData];
     
     // Assert
@@ -457,7 +464,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testExpiringPurchaseWithInsufficientBalance {
     // Arrange
-    [self refreshState:@[SpeedBoostPurchaseClass]];
+    [self refreshState:@[SpeedBoostPurchaseClass] localOnly:FALSE];
     NSArray<PSIPurchasePrice *> *purchasePrices = [lib getPurchasePrices];
     XCTAssert(purchasePrices != nil);
     XCTAssert(purchasePrices.count > 0);
@@ -480,7 +487,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 - (void)testPurchaseAndExpire {
     // Arrange
     XCTAssert(lib.balance == 0);
-    [self refreshState:@[SpeedBoostPurchaseClass]];
+    [self refreshState:@[SpeedBoostPurchaseClass] localOnly:FALSE];
     XCTAssert([lib hasTokens] == TRUE);
     [self rewardInTrillions:3];
     
@@ -593,7 +600,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 // Tests logging in with a tracker already in place.
 - (void)testLoginWithTracker {
     // Arrange
-    [self refreshState:@[SpeedBoostPurchaseClass]]; // get tracker tokens
+    [self refreshState:@[SpeedBoostPurchaseClass] localOnly:FALSE]; // get tracker tokens
     XCTAssert([lib isAccount] == FALSE);
     
     // Act
@@ -618,7 +625,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testResetUserWithTrackerOnly {
     // Arrange
-    [self refreshState:@[SpeedBoostPurchaseClass]]; // get tracker tokens
+    [self refreshState:@[SpeedBoostPurchaseClass] localOnly:FALSE]; // get tracker tokens
     
     // Act
     [lib resetUser];

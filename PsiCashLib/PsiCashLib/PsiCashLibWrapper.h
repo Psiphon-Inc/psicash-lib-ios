@@ -224,6 +224,9 @@ typedef NS_ENUM(NSInteger, PSIStatus) {
 /// client_version, client_region, sponsor_id, and propagation_channel_id.
 - (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key withValue:(NSString *)value WARN_UNUSED_RESULT;
 
+/// Set current UI locale.
+- (PSIError *_Nullable)setLocale:(NSString *)locale;
+
 // MARK: Stored info accessors
 
 /// Returns true if there are sufficient tokens for this library to function on behalf
@@ -281,11 +284,15 @@ typedef NS_ENUM(NSInteger, PSIStatus) {
 /// where the user can buy PsiCash for real money.
 - (PSIResult<NSString *> *)getBuyPsiURL;
 
-/// Returns the URL that should be used for signing up a new account.
-- (NSString *)getAccountSignupURL;
+typedef NS_ENUM(NSInteger, PSIUserSiteURLType) {
+    PSIUserSiteURLTypeAccountSignup = 0,
+    PSIUserSiteURLTypeAccountManagement,
+    PSIUserSiteURLTypeForgotAccount
+};
 
-/// Returns the URL that should be used for managing and existing account.
-- (NSString *)getAccountManagementURL;
+/// Returns the `my.psi.cash` URL of the give type.
+/// If `webview` is true, the URL will be appended to with `#!webview`.
+- (NSString *)getUserSiteURL:(PSIUserSiteURLType)urlType webview:(BOOL)webview;
 
 /// Creates a data package that should be included with a webhook for a user
 /// action that should be rewarded (such as watching a rewarded video).
@@ -331,8 +338,12 @@ be retrieved, but there may be stored (possibly stale) values that can be used.
 
 Input parameters:
 
-• purchase_classes: The purchase class names for which prices should be
-  retrieved, like `{"speed-boost"}`. If null or empty, no purchase prices will be retrieved.
+ • local_only: If true, no network call will be made, and the refresh will utilize only
+   locally-stored data (i.e., only token expiry will be checked, and a transition into
+   a logged-out state may result).
+
+ • purchase_classes: The purchase class names for which prices should be
+   retrieved, like `{"speed-boost"}`. If null or empty, no purchase prices will be retrieved.
 
 Result fields:
 
@@ -359,7 +370,8 @@ Possible status codes:
   corruption). The local user state will be cleared.
 */
 - (PSIResult<PSIRefreshStateResponse *> *)
-refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses WARN_UNUSED_RESULT;
+refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses
+localOnly:(BOOL)localOnly WARN_UNUSED_RESULT;
 
 /**
  Makes a new transaction for an "expiring-purchase" class, such as "speed-boost".

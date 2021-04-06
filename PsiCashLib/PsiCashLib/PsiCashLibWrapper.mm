@@ -623,6 +623,11 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::AccountLogoutResponse
     return [PSIError createFrom:err];
 }
 
+- (PSIError *_Nullable)setLocale:(NSString *)locale {
+    psicash::error::Error err = psiCash->SetLocale([locale UTF8String]);
+    return [PSIError createFrom:err];
+}
+
 - (BOOL)hasTokens {
     return bool2ObjcBOOL(psiCash->HasTokens());
 }
@@ -696,13 +701,9 @@ removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
     return [PSIResult fromStringResult:result];
 }
 
-- (NSString *)getAccountSignupURL {
-    std::string url = psiCash->GetAccountSignupURL();
-    return [NSString stringWithUTF8String:url.c_str()];
-}
-
-- (NSString *)getAccountManagementURL {
-    std::string url = psiCash->GetAccountManagementURL();
+- (NSString *)getUserSiteURL:(PSIUserSiteURLType)urlType webview:(BOOL)webview {
+    psicash::PsiCash::UserSiteURLType cppUrlType = (psicash::PsiCash::UserSiteURLType)urlType;
+    std::string url = psiCash->GetUserSiteURL(cppUrlType, ObjcBOOL2bool(webview));
     return [NSString stringWithUTF8String:url.c_str()];
 }
 
@@ -723,9 +724,10 @@ removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
     }
 }
 
-- (PSIResult<PSIRefreshStateResponse *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses {
-    std::vector<std::string> purchase_classes = arrayOfStringsToCppVecOfStrings(purchaseClasses);
-    psicash::error::Result<psicash::PsiCash::RefreshStateResponse> result = psiCash->RefreshState(purchase_classes);
+- (PSIResult<PSIRefreshStateResponse *> *)refreshStateWithPurchaseClasses:(NSArray<NSString *> *)purchaseClasses
+                                                                localOnly:(BOOL)localOnly {
+    std::vector<std::string> cppPurchasesClasses = arrayOfStringsToCppVecOfStrings(purchaseClasses);
+    psicash::error::Result<psicash::PsiCash::RefreshStateResponse> result = psiCash->RefreshState(ObjcBOOL2bool(localOnly), cppPurchasesClasses);
     return [PSIRefreshStateResponse fromResult:result];
 }
 
