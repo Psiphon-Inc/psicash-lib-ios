@@ -209,23 +209,23 @@ typedef NS_ENUM(NSInteger, PSIStatus) {
                                           test:(BOOL)test WARN_UNUSED_RESULT;
 
 /// Returns true if the library has been successfully initialized (i.e., `initializeWithUserAgent::::` called).
-- (BOOL)initialized;
+- (BOOL)initialized WARN_UNUSED_RESULT;
 
 /// Resets PsiCash data for the current user (Tracker or Account). This will typically
 /// be called when wanting to revert to a Tracker from a previously logged in Account.
-- (PSIError *_Nullable)resetUser;
+- (PSIError *_Nullable)resetUser WARN_UNUSED_RESULT;
 
 /// Forces the given tokens and account status to be set in the datastore. Must be
 /// called after Init(). RefreshState() must be called after method (and shouldn't be
 /// be called before this method, although behaviour will be okay).
-- (PSIError *_Nullable)migrateTrackerTokens:(NSDictionary<NSString *, NSString *> *)tokens;
+- (PSIError *_Nullable)migrateTrackerTokens:(NSDictionary<NSString *, NSString *> *)tokens WARN_UNUSED_RESULT;
 
 /// Set values that will be included in the request metadata. This includes
 /// client_version, client_region, sponsor_id, and propagation_channel_id.
 - (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key withValue:(NSString *)value WARN_UNUSED_RESULT;
 
 /// Set current UI locale.
-- (PSIError *_Nullable)setLocale:(NSString *)locale;
+- (PSIError *_Nullable)setLocale:(NSString *)locale WARN_UNUSED_RESULT;
 
 // MARK: Stored info accessors
 
