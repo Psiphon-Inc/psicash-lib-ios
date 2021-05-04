@@ -239,6 +239,9 @@ typedef NS_ENUM(NSInteger, PSIStatus) {
 /// Returns the stored info about whether the user is a Tracker or an Account.
 - (BOOL)isAccount;
 
+/// Returns the username of the logged-in account, if in a logged-in-account state.
+- (NSString *_Nullable)accountUsername;
+
 /// Returns the stored user balance.
 - (int64_t)balance;
 

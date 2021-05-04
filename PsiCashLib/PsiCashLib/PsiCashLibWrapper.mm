@@ -636,6 +636,18 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::AccountLogoutResponse
     return bool2ObjcBOOL(psiCash->IsAccount());
 }
 
+- (NSString *_Nullable)accountUsername {
+    
+    nonstd::optional<std::string> username = psiCash->AccountUsername();
+    
+    if (username.has_value()) {
+        return [NSString stringWithUTF8String:username.value().c_str()];
+    } else {
+        return nil;
+    }
+    
+}
+
 - (int64_t)balance {
     return psiCash->Balance();
 }
