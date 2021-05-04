@@ -294,7 +294,7 @@ typedef NS_ENUM(NSInteger, PSIUserSiteURLType) {
 };
 
 /// Returns the `my.psi.cash` URL of the give type.
-/// If `webview` is true, the URL will be appended to with `#!webview`.
+/// If `webview` is true, the URL will be appended to with `?webview=true`.
 - (NSString *)getUserSiteURL:(PSIUserSiteURLType)urlType webview:(BOOL)webview;
 
 /// Creates a data package that should be included with a webhook for a user
