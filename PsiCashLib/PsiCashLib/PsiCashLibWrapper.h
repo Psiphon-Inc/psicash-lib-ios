@@ -77,13 +77,11 @@ NS_ASSUME_NONNULL_BEGIN
                         body:(NSString *)body
                        error:(NSString *)error;
 
-// Convenience initializer with `code` set to `CRITICAL_ERROR`, and all other fields
-// set to empty string.
-- (instancetype)initWithCriticalError;
+// Convenience initializer with `code` set to `CRITICAL_ERROR`.
+- (instancetype)initWithCriticalError:(NSString *)error;
 
-// Convenience initializer with `code` set to `RECOVERABLE_ERROR`, and all other fields
-// set to empty string.
-- (instancetype)initWithRecoverableError;
+// Convenience initializer with `code` set to `RECOVERABLE_ERROR`.
+- (instancetype)initWithRecoverableError:(NSString *)error;
 
 @end
 

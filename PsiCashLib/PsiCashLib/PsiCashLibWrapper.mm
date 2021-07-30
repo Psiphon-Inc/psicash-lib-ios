@@ -200,12 +200,12 @@ dictOfArrayOfStringsToCppMap(NSDictionary<NSString *, NSArray<NSString *> *> *_N
     return self;
 }
 
-- (instancetype)initWithCriticalError {
-    return [self initWithCode:[PSIHttpResult CRITICAL_ERROR] headers:@{} body:@"" error:@""];
+- (instancetype)initWithCriticalError:(NSString *)error {
+    return [self initWithCode:[PSIHttpResult CRITICAL_ERROR] headers:@{} body:@"" error:error];
 }
 
-- (instancetype)initWithRecoverableError {
-    return [self initWithCode:[PSIHttpResult RECOVERABLE_ERROR] headers:@{} body:@"" error:@""];
+- (instancetype)initWithRecoverableError:(NSString *)error {
+    return [self initWithCode:[PSIHttpResult RECOVERABLE_ERROR] headers:@{} body:@"" error:error];
 }
 
 - (psicash::HTTPResult)cppHttpResult {
