@@ -724,8 +724,8 @@ removePurchasesWithTransactionID:(NSArray<NSString *> *)transactionIds {
     return [PSIResult fromStringResult:result];
 }
 
-- (NSString *)getDiagnosticInfo {
-    nlohmann::json diagnostic = psiCash->GetDiagnosticInfo();
+- (NSString *)getDiagnosticInfo:(BOOL)lite {
+    nlohmann::json diagnostic = psiCash->GetDiagnosticInfo(ObjcBOOL2bool(lite));
     try {
         auto dump = diagnostic.dump(-1, ' ', true);
         return [NSString stringWithUTF8String:dump.c_str()];
