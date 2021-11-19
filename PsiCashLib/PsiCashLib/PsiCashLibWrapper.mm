@@ -93,6 +93,21 @@ cppMapToDict(const std::map<std::string, std::string>& map) {
     return dict;
 }
 
+std::map<std::string, std::string> copyObjcDictToMap(NSDictionary<NSString *, NSString *> *_Nonnull dict) {
+    
+    std::map<std::string, std::string> map;
+    for (NSString *key in dict) {
+        std::string cppKey = [key UTF8String];
+        NSString *value = dict[key];
+        assert(value != nil);
+        std::string cppValue = [value UTF8String];
+        map[cppKey] = cppValue;
+    }
+    
+    return map;
+    
+}
+
 NSArray<PSIPair<NSString *> *> *_Nonnull
 cppVecOfPairsToArray(const std::vector<std::pair<std::string, std::string>>& vec) {
     NSMutableArray<PSIPair<NSString *> *> *array = [NSMutableArray arrayWithCapacity:vec.size()];
@@ -616,11 +631,12 @@ fromResult:(const psicash::error::Result<psicash::PsiCash::AccountLogoutResponse
     return [PSIError createFrom:err];
 }
 
-- (PSIError *_Nullable)setRequestMetadataItem:(NSString *)key
-                                    withValue:(NSString *)value {
-    psicash::error::Error err = psiCash->SetRequestMetadataItem([key UTF8String],
-                                                                [value UTF8String]);
+- (PSIError *_Nullable)setRequestMetadataItems:(NSDictionary<NSString*, NSString*>*)items {
+    
+    std::map<std::string, std::string> _items = copyObjcDictToMap(items);
+    psicash::error::Error err = psiCash->SetRequestMetadataItems(_items);
     return [PSIError createFrom:err];
+    
 }
 
 - (PSIError *_Nullable)setLocale:(NSString *)locale {

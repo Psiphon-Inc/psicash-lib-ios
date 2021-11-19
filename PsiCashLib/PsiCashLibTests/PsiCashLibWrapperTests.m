@@ -264,16 +264,17 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testSetRequestMetadataItem {
     // Arrange
-    PSIError *err1 = [lib setRequestMetadataItem:@"metadata_key_1" withValue:@"metadata_value_1"];
-    PSIError *err2 = [lib setRequestMetadataItem:@"metadata_key_2" withValue:@"metadata_value_2"];
+    NSDictionary *items = @{ @"metadata_key_1": @"metadata_value_1",
+                             @"metadata_key_2": @"metadata_value_2" };
+    
+    PSIError *err = [lib setRequestMetadataItems:items];
     self.httpRequestsDryRun = TRUE;
     
     // Act
     PSIResult<PSIRefreshStateResponse *> *result = [lib refreshStateWithPurchaseClasses:@[] localOnly:FALSE];
     
     // Assert
-    XCTAssert(err1 == nil);
-    XCTAssert(err2 == nil);
+    XCTAssert(err == nil);
     XCTAssert(result.success == nil);
     XCTAssert(result.failure != nil);
     XCTAssertTrue([lastHttpRequest.headers[@"X-PsiCash-Metadata"] isEqualToString:@"{\"attempt\":1,\"metadata_key_1\":\"metadata_value_1\",\"metadata_key_2\":\"metadata_value_2\",\"user_agent\":\"Psiphon-PsiCash-iOS\",\"v\":1}"]);
@@ -455,7 +456,7 @@ typedef NS_ENUM(NSInteger, TestError) {
 
 - (void)testDiagnosticInfo {
     // Act
-    NSString *info = [lib getDiagnosticInfo];
+    NSString *info = [lib getDiagnosticInfo:FALSE];
     
     // Assert
     XCTAssert(info != nil);
