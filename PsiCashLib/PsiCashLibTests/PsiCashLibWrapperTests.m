@@ -460,7 +460,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     
     // Assert
     XCTAssert(info != nil);
-    XCTAssert([info isEqualToString:@"{\"balance\":0,\"isAccount\":false,\"isLoggedOutAccount\":false,\"purchasePrices\":[],\"purchases\":[],\"serverTimeDiff\":0,\"test\":true,\"validTokenTypes\":[]}"]);
+    XCTAssert([info isEqualToString:@"{\"balance\":0,\"hasInstanceID\":true,\"isAccount\":false,\"isLoggedOutAccount\":false,\"purchasePrices\":[],\"purchases\":[],\"serverTimeDiff\":0,\"test\":true,\"validTokenTypes\":[]}"]);
 }
 
 - (void)testExpiringPurchaseWithInsufficientBalance {
