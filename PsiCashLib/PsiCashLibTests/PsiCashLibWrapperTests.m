@@ -514,7 +514,7 @@ typedef NS_ENUM(NSInteger, TestError) {
     XCTAssert(purchases.count == 1);
     XCTAssert(purchases[0].transactionID.length > 0);
     XCTAssert([purchases[0].transactionClass isEqualToString:SpeedBoostPurchaseClass]);
-    XCTAssert([purchases[0].distinguisher isEqualToString:@"1min"]);
+    XCTAssert([purchases[0].distinguisher isEqualToString:@"1hr"]);
     XCTAssert(purchases[0].iso8601ServerTimeExpiry.length > 0);
     XCTAssert(purchases[0].iso8601LocalTimeExpiry.length > 0);
     XCTAssert(purchases[0].authorization.ID.length > 0);
