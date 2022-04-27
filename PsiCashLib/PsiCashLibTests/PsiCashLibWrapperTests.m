@@ -219,10 +219,9 @@ typedef NS_ENUM(NSInteger, TestError) {
     NSArray<NSString *> *contents = [NSFileManager.defaultManager
                                      contentsOfDirectoryAtPath:tempDir.path
                                      error:&err];
-    
     XCTAssert(err == nil);
-    XCTAssert(contents.count == 1);
-    XCTAssertTrue([contents isEqualToArray:@[@"psicashdatastore.dev"]]);
+    NSArray *expectedContnet = @[@"psicashdatastore.dev", @"psicashdatastore.dev.2"];
+    XCTAssertTrue([contents isEqualToArray:expectedContnet]);
     XCTAssert([lib hasTokens] == TRUE);
     
     // Act
